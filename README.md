@@ -30,7 +30,7 @@ The input data should be in netCDF with the variables:
 * `lat`: latitude (degrees North)
 * `time`: time (days since 1900-01-01 00:00:00)
 * `mask`: boolean mask where true means the data location is valid
-* `SST`: data
+* `SST` (or any other varbiable name): data
 
 
 ```
@@ -52,4 +52,4 @@ variables:
 
 ## Running DINCAE
 
-Copy the template file `run_DINCAE.py` and adapt the filename, variable name and the output directory and possibly optional arguments for the reconstruction method mentioned in the [documentation](https://gher-ulg.github.io/DINCAE/).
+Copy the template file `run_DINCAE.py` and adapt the filename, variable name and the output directory and possibly optional arguments for the reconstruction method as mentioned in the [documentation](https://gher-ulg.github.io/DINCAE/).
