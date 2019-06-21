@@ -14,23 +14,23 @@ Python 3.6 with the modules:
 * netCDF4 (https://unidata.github.io/netcdf4-python/netCDF4/index.html)
 * TensorFlow 1.12 with GPU support (https://www.tensorflow.org/install)
 
-Tested version:
+Tested versions:
 
 * Python 3.6.8
 * netcdf4 1.4.2
 * numpy 1.15.4
 * Tensorflow version 1.12.0
 
-You can install those packages either with `pip3` or with `conda`:
+You can install those packages either with `pip3` or with `conda`.
 
 ## Input format
 
 The input data should be in netCDF with the variables:
-`lon`: longitude (degrees East)
-`lat`: latitude (degrees North)
-`time`: time (days since 1900-01-01 00:00:00)
-`mask`: boolean mask where true means the data location is valid
-`SST`: data
+* `lon`: longitude (degrees East)
+* `lat`: latitude (degrees North)
+* `time`: time (days since 1900-01-01 00:00:00)
+* `mask`: boolean mask where true means the data location is valid
+* `SST`: data
 
 
 ```
@@ -52,5 +52,4 @@ variables:
 
 ## Running DINCAE
 
-Copy the template file `run_DINCAE.py` and adapt the filename, variable name and the output directory and possibly optional
-arguements for the reconstruction method.
+Copy the template file `run_DINCAE.py` and adapt the filename, variable name and the output directory and possibly optional arguments for the reconstruction method mentioned in the [documentation](https://gher-ulg.github.io/DINCAE/).
