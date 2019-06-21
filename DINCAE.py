@@ -96,11 +96,11 @@ attributes:
 
 def data_generator(lon,lat,time,data_full,missing,
                    train = True,
-                   obserrstd = 1.,
+                   obs_err_std = 1.,
                    jitter_std = 0.05):
     """
 Return a generator for training (`train = True`) or testing (`train = False`)
-the neural network. `obserrstd` is the error standard deviation of the
+the neural network. `obs_err_std` is the error standard deviation of the
 observations. The variable `lon` is the longitude in degrees east, `lat` is the
 latitude in degrees North, `time` is a numpy datetime vector, `data_full` is a
 3-d array with the data and `missing` is a boolean mask where true means the data is
@@ -127,8 +127,8 @@ the temporal mean of the data.
 
     x = np.zeros((sz[0],sz[1],sz[2],6),dtype="float32")
 
-    x[:,:,:,1] = (1-data.mask) / (obserrstd**2)  # error variance
-    x[:,:,:,0] = data.filled(0) / (obserrstd**2)
+    x[:,:,:,1] = (1-data.mask) / (obs_err_std**2)  # error variance
+    x[:,:,:,0] = data.filled(0) / (obs_err_std**2)
 
     # scale between -1 and 1
     lon_scaled = 2 * (lon - np.min(lon)) / (np.max(lon) - np.min(lon)) - 1
@@ -570,4 +570,4 @@ See `DINCAE.reconstruct` for other keyword arguments and
 
 #  LocalWords:  DINCAE Convolutional MERCHANTABILITY gridded
 #  LocalWords:  TensorBoard stddev varname NetCDF fname lon numpy datetime
-#  LocalWords:  boolean netcdf FillValue obserrstd datagen ntime meandata
+#  LocalWords:  boolean netcdf FillValue obs_err_std datagen ntime meandata
