@@ -53,3 +53,11 @@ variables:
 ## Running DINCAE
 
 Copy the template file `run_DINCAE.py` and adapt the filename, variable name and the output directory and possibly optional arguments for the reconstruction method as mentioned in the [documentation](https://gher-ulg.github.io/DINCAE/).
+The code can be run as follows:
+
+```
+export PYTHONPATH=/path/to/module
+python3 run_DINCAE.py
+```
+
+`/path/to/module` should be replaced by the directory name containing the file `DINCAE.py`.
