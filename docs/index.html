@@ -1,0 +1,2281 @@
+<!doctype html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+
+    <title>DINCAE API documentation</title>
+    <meta name="description" content="DINCAE (Data-Interpolating Convolutional Auto-Encoder) is a neural network to
+reconstruct missing da..." />
+
+  <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300' rel='stylesheet' type='text/css'>
+  
+  <style type="text/css">
+  
+* {
+  box-sizing: border-box;
+}
+/*! normalize.css v1.1.1 | MIT License | git.io/normalize */
+
+/* ==========================================================================
+   HTML5 display definitions
+   ========================================================================== */
+
+/**
+ * Correct `block` display not defined in IE 6/7/8/9 and Firefox 3.
+ */
+
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+main,
+nav,
+section,
+summary {
+    display: block;
+}
+
+/**
+ * Correct `inline-block` display not defined in IE 6/7/8/9 and Firefox 3.
+ */
+
+audio,
+canvas,
+video {
+    display: inline-block;
+    *display: inline;
+    *zoom: 1;
+}
+
+/**
+ * Prevent modern browsers from displaying `audio` without controls.
+ * Remove excess height in iOS 5 devices.
+ */
+
+audio:not([controls]) {
+    display: none;
+    height: 0;
+}
+
+/**
+ * Address styling not present in IE 7/8/9, Firefox 3, and Safari 4.
+ * Known issue: no IE 6 support.
+ */
+
+[hidden] {
+    display: none;
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+/**
+ * 1. Prevent system color scheme's background color being used in Firefox, IE,
+ *    and Opera.
+ * 2. Prevent system color scheme's text color being used in Firefox, IE, and
+ *    Opera.
+ * 3. Correct text resizing oddly in IE 6/7 when body `font-size` is set using
+ *    `em` units.
+ * 4. Prevent iOS text size adjust after orientation change, without disabling
+ *    user zoom.
+ */
+
+html {
+    background: #fff; /* 1 */
+    color: #000; /* 2 */
+    font-size: 100%; /* 3 */
+    -webkit-text-size-adjust: 100%; /* 4 */
+    -ms-text-size-adjust: 100%; /* 4 */
+}
+
+/**
+ * Address `font-family` inconsistency between `textarea` and other form
+ * elements.
+ */
+
+html,
+button,
+input,
+select,
+textarea {
+    font-family: sans-serif;
+}
+
+/**
+ * Address margins handled incorrectly in IE 6/7.
+ */
+
+body {
+    margin: 0;
+}
+
+/* ==========================================================================
+   Links
+   ========================================================================== */
+
+/**
+ * Address `outline` inconsistency between Chrome and other browsers.
+ */
+
+a:focus {
+    outline: thin dotted;
+}
+
+/**
+ * Improve readability when focused and also mouse hovered in all browsers.
+ */
+
+a:active,
+a:hover {
+    outline: 0;
+}
+
+/* ==========================================================================
+   Typography
+   ========================================================================== */
+
+/**
+ * Address font sizes and margins set differently in IE 6/7.
+ * Address font sizes within `section` and `article` in Firefox 4+, Safari 5,
+ * and Chrome.
+ */
+
+h1 {
+    font-size: 2em;
+    margin: 0.67em 0;
+}
+
+h2 {
+    font-size: 1.5em;
+    margin: 0.83em 0;
+}
+
+h3 {
+    font-size: 1.17em;
+    margin: 1em 0;
+}
+
+h4 {
+    font-size: 1em;
+    margin: 1.33em 0;
+}
+
+h5 {
+    font-size: 0.83em;
+    margin: 1.67em 0;
+}
+
+h6 {
+    font-size: 0.67em;
+    margin: 2.33em 0;
+}
+
+/**
+ * Address styling not present in IE 7/8/9, Safari 5, and Chrome.
+ */
+
+abbr[title] {
+    border-bottom: 1px dotted;
+}
+
+/**
+ * Address style set to `bolder` in Firefox 3+, Safari 4/5, and Chrome.
+ */
+
+b,
+strong {
+    font-weight: bold;
+}
+
+blockquote {
+    margin: 1em 40px;
+}
+
+/**
+ * Address styling not present in Safari 5 and Chrome.
+ */
+
+dfn {
+    font-style: italic;
+}
+
+/**
+ * Address differences between Firefox and other browsers.
+ * Known issue: no IE 6/7 normalization.
+ */
+
+hr {
+    -moz-box-sizing: content-box;
+    box-sizing: content-box;
+    height: 0;
+}
+
+/**
+ * Address styling not present in IE 6/7/8/9.
+ */
+
+mark {
+    background: #ff0;
+    color: #000;
+}
+
+/**
+ * Address margins set differently in IE 6/7.
+ */
+
+p,
+pre {
+    margin: 1em 0;
+}
+
+/**
+ * Correct font family set oddly in IE 6, Safari 4/5, and Chrome.
+ */
+
+code,
+kbd,
+pre,
+samp {
+    font-family: monospace, serif;
+    _font-family: 'courier new', monospace;
+    font-size: 1em;
+}
+
+/**
+ * Improve readability of pre-formatted text in all browsers.
+ */
+
+pre {
+    white-space: pre;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/**
+ * Address CSS quotes not supported in IE 6/7.
+ */
+
+q {
+    quotes: none;
+}
+
+/**
+ * Address `quotes` property not supported in Safari 4.
+ */
+
+q:before,
+q:after {
+    content: '';
+    content: none;
+}
+
+/**
+ * Address inconsistent and variable font size in all browsers.
+ */
+
+small {
+    font-size: 80%;
+}
+
+/**
+ * Prevent `sub` and `sup` affecting `line-height` in all browsers.
+ */
+
+sub,
+sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+}
+
+sup {
+    top: -0.5em;
+}
+
+sub {
+    bottom: -0.25em;
+}
+
+/* ==========================================================================
+   Lists
+   ========================================================================== */
+
+/**
+ * Address margins set differently in IE 6/7.
+ */
+
+dl,
+menu,
+ol,
+ul {
+    margin: 1em 0;
+}
+
+dd {
+    margin: 0 0 0 40px;
+}
+
+/**
+ * Address paddings set differently in IE 6/7.
+ */
+
+menu,
+ol,
+ul {
+    padding: 0 0 0 40px;
+}
+
+/**
+ * Correct list images handled incorrectly in IE 7.
+ */
+
+nav ul,
+nav ol {
+    list-style: none;
+    list-style-image: none;
+}
+
+/* ==========================================================================
+   Embedded content
+   ========================================================================== */
+
+/**
+ * 1. Remove border when inside `a` element in IE 6/7/8/9 and Firefox 3.
+ * 2. Improve image quality when scaled in IE 7.
+ */
+
+img {
+    border: 0; /* 1 */
+    -ms-interpolation-mode: bicubic; /* 2 */
+}
+
+/**
+ * Correct overflow displayed oddly in IE 9.
+ */
+
+svg:not(:root) {
+    overflow: hidden;
+}
+
+/* ==========================================================================
+   Figures
+   ========================================================================== */
+
+/**
+ * Address margin not present in IE 6/7/8/9, Safari 5, and Opera 11.
+ */
+
+figure {
+    margin: 0;
+}
+
+/* ==========================================================================
+   Forms
+   ========================================================================== */
+
+/**
+ * Correct margin displayed oddly in IE 6/7.
+ */
+
+form {
+    margin: 0;
+}
+
+/**
+ * Define consistent border, margin, and padding.
+ */
+
+fieldset {
+    border: 1px solid #c0c0c0;
+    margin: 0 2px;
+    padding: 0.35em 0.625em 0.75em;
+}
+
+/**
+ * 1. Correct color not being inherited in IE 6/7/8/9.
+ * 2. Correct text not wrapping in Firefox 3.
+ * 3. Correct alignment displayed oddly in IE 6/7.
+ */
+
+legend {
+    border: 0; /* 1 */
+    padding: 0;
+    white-space: normal; /* 2 */
+    *margin-left: -7px; /* 3 */
+}
+
+/**
+ * 1. Correct font size not being inherited in all browsers.
+ * 2. Address margins set differently in IE 6/7, Firefox 3+, Safari 5,
+ *    and Chrome.
+ * 3. Improve appearance and consistency in all browsers.
+ */
+
+button,
+input,
+select,
+textarea {
+    font-size: 100%; /* 1 */
+    margin: 0; /* 2 */
+    vertical-align: baseline; /* 3 */
+    *vertical-align: middle; /* 3 */
+}
+
+/**
+ * Address Firefox 3+ setting `line-height` on `input` using `!important` in
+ * the UA stylesheet.
+ */
+
+button,
+input {
+    line-height: normal;
+}
+
+/**
+ * Address inconsistent `text-transform` inheritance for `button` and `select`.
+ * All other form control elements do not inherit `text-transform` values.
+ * Correct `button` style inheritance in Chrome, Safari 5+, and IE 6+.
+ * Correct `select` style inheritance in Firefox 4+ and Opera.
+ */
+
+button,
+select {
+    text-transform: none;
+}
+
+/**
+ * 1. Avoid the WebKit bug in Android 4.0.* where (2) destroys native `audio`
+ *    and `video` controls.
+ * 2. Correct inability to style clickable `input` types in iOS.
+ * 3. Improve usability and consistency of cursor style between image-type
+ *    `input` and others.
+ * 4. Remove inner spacing in IE 7 without affecting normal text inputs.
+ *    Known issue: inner spacing remains in IE 6.
+ */
+
+button,
+html input[type="button"], /* 1 */
+input[type="reset"],
+input[type="submit"] {
+    -webkit-appearance: button; /* 2 */
+    cursor: pointer; /* 3 */
+    *overflow: visible;  /* 4 */
+}
+
+/**
+ * Re-set default cursor for disabled elements.
+ */
+
+button[disabled],
+html input[disabled] {
+    cursor: default;
+}
+
+/**
+ * 1. Address box sizing set to content-box in IE 8/9.
+ * 2. Remove excess padding in IE 8/9.
+ * 3. Remove excess padding in IE 7.
+ *    Known issue: excess padding remains in IE 6.
+ */
+
+input[type="checkbox"],
+input[type="radio"] {
+    box-sizing: border-box; /* 1 */
+    padding: 0; /* 2 */
+    *height: 13px; /* 3 */
+    *width: 13px; /* 3 */
+}
+
+/**
+ * 1. Address `appearance` set to `searchfield` in Safari 5 and Chrome.
+ * 2. Address `box-sizing` set to `border-box` in Safari 5 and Chrome
+ *    (include `-moz` to future-proof).
+ */
+
+input[type="search"] {
+    -webkit-appearance: textfield; /* 1 */
+    -moz-box-sizing: content-box;
+    -webkit-box-sizing: content-box; /* 2 */
+    box-sizing: content-box;
+}
+
+/**
+ * Remove inner padding and search cancel button in Safari 5 and Chrome
+ * on OS X.
+ */
+
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration {
+    -webkit-appearance: none;
+}
+
+/**
+ * Remove inner padding and border in Firefox 3+.
+ */
+
+button::-moz-focus-inner,
+input::-moz-focus-inner {
+    border: 0;
+    padding: 0;
+}
+
+/**
+ * 1. Remove default vertical scrollbar in IE 6/7/8/9.
+ * 2. Improve readability and alignment in all browsers.
+ */
+
+textarea {
+    overflow: auto; /* 1 */
+    vertical-align: top; /* 2 */
+}
+
+/* ==========================================================================
+   Tables
+   ========================================================================== */
+
+/**
+ * Remove most spacing between table cells.
+ */
+
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+  </style>
+
+  <style type="text/css">
+  
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+  }
+  body {
+    background: #fff;
+    font-family: "Source Sans Pro", "Helvetica Neueue", Helvetica, sans;
+    font-weight: 300;
+    font-size: 16px;
+    line-height: 1.6em;
+  }
+  #content {
+    width: 70%;
+    max-width: 850px;
+    float: left;
+    padding: 30px 60px;
+    border-left: 1px solid #ddd;
+  }
+  #sidebar {
+    width: 25%;
+    float: left;
+    padding: 30px;
+    overflow: hidden;
+  }
+  #nav {
+    font-size: 130%;
+    margin: 0 0 15px 0;
+  }
+
+  #top {
+    display: block;
+    position: fixed;
+    bottom: 5px;
+    left: 5px;
+    font-size: .85em;
+    text-transform: uppercase;
+  }
+
+  #footer {
+    font-size: .75em;
+    padding: 5px 30px;
+    border-top: 1px solid #ddd;
+    text-align: right;
+  }
+    #footer p {
+      margin: 0 0 0 30px;
+      display: inline-block;
+    }
+
+  h1, h2, h3, h4, h5 {
+    font-weight: 300;
+  }
+  h1 {
+    font-size: 2.5em;
+    line-height: 1.1em;
+    margin: 0 0 .50em 0;
+  }
+
+  h2 {
+    font-size: 1.75em;
+    margin: 1em 0 .50em 0;
+  }
+
+  h3 {
+    margin: 25px 0 10px 0;
+  }
+
+  h4 {
+    margin: 0;
+    font-size: 105%;
+  }
+
+  a {
+    color: #058;
+    text-decoration: none;
+    transition: color .3s ease-in-out;
+  }
+
+  a:hover {
+    color: #e08524;
+    transition: color .3s ease-in-out;
+  }
+
+  pre, code, .mono, .name {
+    font-family: "Ubuntu Mono", "Cousine", "DejaVu Sans Mono", monospace;
+  }
+
+  .title .name {
+    font-weight: bold;
+  }
+  .section-title {
+    margin-top: 2em;
+  }
+  .ident {
+    color: #900;
+  }
+
+  code {
+    background: #f9f9f9;
+  } 
+
+  pre {
+    background: #fefefe;
+    border: 1px solid #ddd;
+    box-shadow: 2px 2px 0 #f3f3f3;
+    margin: 0 30px;
+    padding: 15px 30px;
+  }
+
+  .codehilite {
+    margin: 0 30px 10px 30px;
+  }
+
+    .codehilite pre {
+      margin: 0;
+    }
+    .codehilite .err { background: #ff3300; color: #fff !important; } 
+
+  table#module-list {
+    font-size: 110%;
+  }
+
+    table#module-list tr td:first-child {
+      padding-right: 10px;
+      white-space: nowrap;
+    }
+
+    table#module-list td {
+      vertical-align: top;
+      padding-bottom: 8px;
+    }
+
+      table#module-list td p {
+        margin: 0 0 7px 0;
+      }
+
+  .def {
+    display: table;
+  }
+
+    .def p {
+      display: table-cell;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    .def p:first-child {
+      white-space: nowrap;
+    }
+
+    .def p:last-child {
+      width: 100%;
+    }
+
+
+  #index {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+  }
+    ul#index .class_name {
+      /* font-size: 110%; */
+      font-weight: bold;
+    }
+    #index ul {
+      margin: 0;
+    }
+
+  .item {
+    margin: 0 0 15px 0;
+  }
+
+    .item .class {
+      margin: 0 0 25px 30px;
+    }
+
+      .item .class ul.class_list {
+        margin: 0 0 20px 0;
+      }
+
+    .item .name {
+      background: #fafafa;
+      margin: 0;
+      font-weight: bold;
+      padding: 5px 10px;
+      border-radius: 3px;
+      display: inline-block;
+      min-width: 40%;
+    }
+      .item .name:hover {
+        background: #f6f6f6;
+      }
+
+    .item .empty_desc {
+      margin: 0 0 5px 0;
+      padding: 0;
+    }
+
+    .item .inheritance {
+      margin: 3px 0 0 30px;
+    }
+
+    .item .inherited {
+      color: #666;
+    }
+
+    .item .desc {
+      padding: 0 8px;
+      margin: 0;
+    }
+
+      .item .desc p {
+        margin: 0 0 10px 0;
+      }
+
+    .source_cont {
+      margin: 0;
+      padding: 0;
+    }
+
+    .source_link a {
+      background: #ffc300;
+      font-weight: 400;
+      font-size: .75em;
+      text-transform: uppercase;
+      color: #fff;
+      text-shadow: 1px 1px 0 #f4b700;
+      
+      padding: 3px 8px;
+      border-radius: 2px;
+      transition: background .3s ease-in-out;
+    }
+      .source_link a:hover {
+        background: #FF7200;
+        text-shadow: none;
+        transition: background .3s ease-in-out;
+      }
+
+    .source {
+      display: none;
+      max-height: 600px;
+      overflow-y: scroll;
+      margin-bottom: 15px;
+    }
+
+      .source .codehilite {
+        margin: 0;
+      }
+
+  .desc h1, .desc h2, .desc h3 {
+    font-size: 100% !important;
+  }
+  .clear {
+    clear: both;
+  }
+
+  @media all and (max-width: 950px) {
+    #sidebar {
+      width: 35%;
+    }
+    #content {
+      width: 65%;
+    }
+  }
+  @media all and (max-width: 650px) {
+    #top {
+      display: none;
+    }
+    #sidebar {
+      float: none;
+      width: auto;
+    }
+    #content {
+      float: none;
+      width: auto;
+      padding: 30px;
+    }
+
+    #index ul {
+      padding: 0;
+      margin-bottom: 15px;
+    }
+    #index ul li {
+      display: inline-block;
+      margin-right: 30px;
+    }
+    #footer {
+      text-align: left;
+    }
+    #footer p {
+      display: block;
+      margin: inherit;
+    }
+  }
+
+  /*****************************/
+
+  </style>
+
+  <style type="text/css">
+  .codehilite .hll { background-color: #ffffcc }
+.codehilite  { background: #f8f8f8; }
+.codehilite .c { color: #408080; font-style: italic } /* Comment */
+.codehilite .err { border: 1px solid #FF0000 } /* Error */
+.codehilite .k { color: #008000; font-weight: bold } /* Keyword */
+.codehilite .o { color: #666666 } /* Operator */
+.codehilite .ch { color: #408080; font-style: italic } /* Comment.Hashbang */
+.codehilite .cm { color: #408080; font-style: italic } /* Comment.Multiline */
+.codehilite .cp { color: #BC7A00 } /* Comment.Preproc */
+.codehilite .cpf { color: #408080; font-style: italic } /* Comment.PreprocFile */
+.codehilite .c1 { color: #408080; font-style: italic } /* Comment.Single */
+.codehilite .cs { color: #408080; font-style: italic } /* Comment.Special */
+.codehilite .gd { color: #A00000 } /* Generic.Deleted */
+.codehilite .ge { font-style: italic } /* Generic.Emph */
+.codehilite .gr { color: #FF0000 } /* Generic.Error */
+.codehilite .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.codehilite .gi { color: #00A000 } /* Generic.Inserted */
+.codehilite .go { color: #888888 } /* Generic.Output */
+.codehilite .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.codehilite .gt { color: #0044DD } /* Generic.Traceback */
+.codehilite .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
+.codehilite .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
+.codehilite .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
+.codehilite .kp { color: #008000 } /* Keyword.Pseudo */
+.codehilite .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
+.codehilite .kt { color: #B00040 } /* Keyword.Type */
+.codehilite .m { color: #666666 } /* Literal.Number */
+.codehilite .s { color: #BA2121 } /* Literal.String */
+.codehilite .na { color: #7D9029 } /* Name.Attribute */
+.codehilite .nb { color: #008000 } /* Name.Builtin */
+.codehilite .nc { color: #0000FF; font-weight: bold } /* Name.Class */
+.codehilite .no { color: #880000 } /* Name.Constant */
+.codehilite .nd { color: #AA22FF } /* Name.Decorator */
+.codehilite .ni { color: #999999; font-weight: bold } /* Name.Entity */
+.codehilite .ne { color: #D2413A; font-weight: bold } /* Name.Exception */
+.codehilite .nf { color: #0000FF } /* Name.Function */
+.codehilite .nl { color: #A0A000 } /* Name.Label */
+.codehilite .nn { color: #0000FF; font-weight: bold } /* Name.Namespace */
+.codehilite .nt { color: #008000; font-weight: bold } /* Name.Tag */
+.codehilite .nv { color: #19177C } /* Name.Variable */
+.codehilite .ow { color: #AA22FF; font-weight: bold } /* Operator.Word */
+.codehilite .w { color: #bbbbbb } /* Text.Whitespace */
+.codehilite .mb { color: #666666 } /* Literal.Number.Bin */
+.codehilite .mf { color: #666666 } /* Literal.Number.Float */
+.codehilite .mh { color: #666666 } /* Literal.Number.Hex */
+.codehilite .mi { color: #666666 } /* Literal.Number.Integer */
+.codehilite .mo { color: #666666 } /* Literal.Number.Oct */
+.codehilite .sa { color: #BA2121 } /* Literal.String.Affix */
+.codehilite .sb { color: #BA2121 } /* Literal.String.Backtick */
+.codehilite .sc { color: #BA2121 } /* Literal.String.Char */
+.codehilite .dl { color: #BA2121 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
+.codehilite .s2 { color: #BA2121 } /* Literal.String.Double */
+.codehilite .se { color: #BB6622; font-weight: bold } /* Literal.String.Escape */
+.codehilite .sh { color: #BA2121 } /* Literal.String.Heredoc */
+.codehilite .si { color: #BB6688; font-weight: bold } /* Literal.String.Interpol */
+.codehilite .sx { color: #008000 } /* Literal.String.Other */
+.codehilite .sr { color: #BB6688 } /* Literal.String.Regex */
+.codehilite .s1 { color: #BA2121 } /* Literal.String.Single */
+.codehilite .ss { color: #19177C } /* Literal.String.Symbol */
+.codehilite .bp { color: #008000 } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #0000FF } /* Name.Function.Magic */
+.codehilite .vc { color: #19177C } /* Name.Variable.Class */
+.codehilite .vg { color: #19177C } /* Name.Variable.Global */
+.codehilite .vi { color: #19177C } /* Name.Variable.Instance */
+.codehilite .vm { color: #19177C } /* Name.Variable.Magic */
+.codehilite .il { color: #666666 } /* Literal.Number.Integer.Long */
+  </style>
+
+  <style type="text/css">
+  
+/* ==========================================================================
+   EXAMPLE Media Queries for Responsive Design.
+   These examples override the primary ('mobile first') styles.
+   Modify as content requires.
+   ========================================================================== */
+
+@media only screen and (min-width: 35em) {
+    /* Style adjustments for viewports that meet the condition */
+}
+
+@media print,
+       (-o-min-device-pixel-ratio: 5/4),
+       (-webkit-min-device-pixel-ratio: 1.25),
+       (min-resolution: 120dpi) {
+    /* Style adjustments for high resolution devices */
+}
+
+/* ==========================================================================
+   Print styles.
+   Inlined to avoid required HTTP connection: h5bp.com/r
+   ========================================================================== */
+
+@media print {
+    * {
+        background: transparent !important;
+        color: #000 !important; /* Black prints faster: h5bp.com/s */
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    a,
+    a:visited {
+        text-decoration: underline;
+    }
+
+    a[href]:after {
+        content: " (" attr(href) ")";
+    }
+
+    abbr[title]:after {
+        content: " (" attr(title) ")";
+    }
+
+    /*
+     * Don't show links for images, or javascript/internal links
+     */
+
+    .ir a:after,
+    a[href^="javascript:"]:after,
+    a[href^="#"]:after {
+        content: "";
+    }
+
+    pre,
+    blockquote {
+        border: 1px solid #999;
+        page-break-inside: avoid;
+    }
+
+    thead {
+        display: table-header-group; /* h5bp.com/t */
+    }
+
+    tr,
+    img {
+        page-break-inside: avoid;
+    }
+
+    img {
+        max-width: 100% !important;
+    }
+
+    @page {
+        margin: 0.5cm;
+    }
+
+    p,
+    h2,
+    h3 {
+        orphans: 3;
+        widows: 3;
+    }
+
+    h2,
+    h3 {
+        page-break-after: avoid;
+    }
+}
+
+  </style>
+
+  <script type="text/javascript">
+  function toggle(id, $link) {
+    $node = document.getElementById(id);
+    if (!$node)
+    return;
+    if (!$node.style.display || $node.style.display == 'none') {
+    $node.style.display = 'block';
+    $link.innerHTML = 'Hide source &nequiv;';
+    } else {
+    $node.style.display = 'none';
+    $link.innerHTML = 'Show source &equiv;';
+    }
+  }
+  </script>
+</head>
+<body>
+<a href="#" id="top">Top</a>
+
+<div id="container">
+    
+  
+  <div id="sidebar">
+    <h1>Index</h1>
+    <ul id="index">
+
+    <li class="set"><h3><a href="#header-functions">Functions</a></h3>
+      
+  <ul>
+    <li class="mono"><a href="#DINCAE.data_generator">data_generator</a></li>
+    <li class="mono"><a href="#DINCAE.load_gridded_nc">load_gridded_nc</a></li>
+    <li class="mono"><a href="#DINCAE.reconstruct">reconstruct</a></li>
+    <li class="mono"><a href="#DINCAE.reconstruct_gridded_nc">reconstruct_gridded_nc</a></li>
+  </ul>
+
+    </li>
+
+
+    </ul>
+  </div>
+
+    <article id="content">
+      
+  
+
+  
+
+
+  <header id="section-intro">
+  <h1 class="title"><span class="name">DINCAE</span> module</h1>
+  <p>DINCAE (Data-Interpolating Convolutional Auto-Encoder) is a neural network to
+reconstruct missing data in satellite observations.</p>
+<p>For most application it is sufficient to call the function
+<a href="#DINCAE.reconstruct_gridded_nc"><code>reconstruct_gridded_nc</code></a> directly.</p>
+  
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-DINCAE', this);">Show source &equiv;</a></p>
+  <div id="source-DINCAE" class="source">
+    <div class="codehilite"><pre><span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="c1"># DINCAE: Data-Interpolating Convolutional Auto-Encoder</span>
+<span class="c1"># Copyright (C) 2019 Alexander Barth</span>
+<span class="c1">#</span>
+<span class="c1"># This file is part of DINCAE.</span>
+
+<span class="c1"># DINCAE is free software: you can redistribute it and/or modify</span>
+<span class="c1"># it under the terms of the GNU General Public License as published by</span>
+<span class="c1"># the Free Software Foundation, either version 2 of the License, or</span>
+<span class="c1"># (at your option) any later version.</span>
+
+<span class="c1"># DINCAE is distributed in the hope that it will be useful,</span>
+<span class="c1"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c1"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c1"># GNU General Public License for more details.</span>
+
+<span class="c1"># You should have received a copy of the GNU General Public License</span>
+<span class="c1"># along with DINCAE. If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">DINCAE (Data-Interpolating Convolutional Auto-Encoder) is a neural network to</span>
+<span class="sd">reconstruct missing data in satellite observations.</span>
+
+<span class="sd">For most application it is sufficient to call the function</span>
+<span class="sd">`DINCAE.reconstruct_gridded_nc` directly.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">ceil</span>
+<span class="kn">from</span> <span class="nn">netCDF4</span> <span class="kn">import</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">num2date</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">tensorflow</span> <span class="kn">as</span> <span class="nn">tf</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;reconstruct&quot;</span><span class="p">,</span><span class="s2">&quot;load_gridded_nc&quot;</span><span class="p">,</span><span class="s2">&quot;data_generator&quot;</span><span class="p">,</span><span class="s2">&quot;reconstruct_gridded_nc&quot;</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">variable_summaries</span><span class="p">(</span><span class="n">var</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Attach several diagnostics (mean, std. dev., ..) of the variable `var`</span>
+<span class="sd">summaries to a Tensor graph (for TensorBoard visualization)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="s1">&#39;summaries&#39;</span><span class="p">):</span>
+      <span class="n">mean</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
+      <span class="n">tf</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="n">mean</span><span class="p">)</span>
+      <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="s1">&#39;stddev&#39;</span><span class="p">):</span>
+        <span class="n">stddev</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">var</span> <span class="o">-</span> <span class="n">mean</span><span class="p">)))</span>
+      <span class="n">tf</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="s1">&#39;stddev&#39;</span><span class="p">,</span> <span class="n">stddev</span><span class="p">)</span>
+      <span class="n">tf</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="s1">&#39;max&#39;</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_max</span><span class="p">(</span><span class="n">var</span><span class="p">))</span>
+      <span class="n">tf</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="s1">&#39;min&#39;</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_min</span><span class="p">(</span><span class="n">var</span><span class="p">))</span>
+      <span class="n">tf</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="s1">&#39;histogram&#39;</span><span class="p">,</span> <span class="n">var</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">load_gridded_nc</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span><span class="n">varname</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Load the variable `varname` from the NetCDF file `fname`. The variable `lon` is</span>
+<span class="sd">the longitude in degrees east, `lat` is the latitude in degrees North, `time` is</span>
+<span class="sd">a numpy datetime vector, `data_full` is a 3-d array with the data, `missing`</span>
+<span class="sd">is a boolean mask where true means the data is missing and `mask` is a boolean mask</span>
+<span class="sd">where true means the data location is valid, e.g. sea points for sea surface temperature.</span>
+
+<span class="sd">At the bare-minimum a NetCDF file should have the following variables and</span>
+<span class="sd">attributes:</span>
+
+
+<span class="sd">    netcdf file.nc {</span>
+<span class="sd">    dimensions:</span>
+<span class="sd">            time = UNLIMITED ; // (5266 currently)</span>
+<span class="sd">            lat = 112 ;</span>
+<span class="sd">            lon = 112 ;</span>
+<span class="sd">    variables:</span>
+<span class="sd">            double lon(lon) ;</span>
+<span class="sd">            double lat(lat) ;</span>
+<span class="sd">            double time(time) ;</span>
+<span class="sd">                    time:units = &quot;days since 1900-01-01 00:00:00&quot; ;</span>
+<span class="sd">            int mask(lat, lon) ;</span>
+<span class="sd">            float SST(time, lat, lon) ;</span>
+<span class="sd">                    SST:_FillValue = -9999.f ;</span>
+<span class="sd">    }</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">fname</span><span class="p">);</span>
+    <span class="n">lon</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;lon&quot;</span><span class="p">][:]</span><span class="o">.</span><span class="n">data</span><span class="p">;</span>
+    <span class="n">lat</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;lat&quot;</span><span class="p">][:]</span><span class="o">.</span><span class="n">data</span><span class="p">;</span>
+    <span class="n">time</span> <span class="o">=</span> <span class="n">num2date</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">][:],</span><span class="n">ds</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">units</span><span class="p">);</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">varname</span><span class="p">][:,:,:];</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">][:,:]</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="mi">1</span><span class="p">;</span>
+
+    <span class="n">ds</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">missing</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">mask</span>
+
+    <span class="k">return</span> <span class="n">lon</span><span class="p">,</span><span class="n">lat</span><span class="p">,</span><span class="n">time</span><span class="p">,</span><span class="n">data</span><span class="p">,</span><span class="n">missing</span><span class="p">,</span><span class="n">mask</span>
+
+
+<span class="k">def</span> <span class="nf">data_generator</span><span class="p">(</span><span class="n">lon</span><span class="p">,</span><span class="n">lat</span><span class="p">,</span><span class="n">time</span><span class="p">,</span><span class="n">data_full</span><span class="p">,</span><span class="n">missing</span><span class="p">,</span>
+                   <span class="n">train</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>
+                   <span class="n">obserrstd</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span>
+                   <span class="n">jitter_std</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Return a generator for training (`train = True`) or testing (`train = False`)</span>
+<span class="sd">the neural network. `obserrstd` is the error standard deviation of the</span>
+<span class="sd">observations. The variable `lon` is the longitude in degrees east, `lat` is the</span>
+<span class="sd">latitude in degrees North, `time` is a numpy datetime vector, `data_full` is a</span>
+<span class="sd">3-d array with the data and `missing` is a boolean mask where true means the data is</span>
+<span class="sd">missing. `jitter_std` is the standard deviation of the noise to be added to the</span>
+<span class="sd">data during training.</span>
+
+<span class="sd">The output of this function is `datagen`, `ntime` and `meandata`. `datagen` is a</span>
+<span class="sd">generator function returning a single image (relative to the mean `meandata`),</span>
+<span class="sd">`ntime` the number of time instances for training or testing and `meandata` is</span>
+<span class="sd">the temporal mean of the data.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+    <span class="n">ntime</span> <span class="o">=</span> <span class="n">data_full</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">meandata</span> <span class="o">=</span> <span class="n">data_full</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">keepdims</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="n">dayofyear</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">d</span><span class="o">.</span><span class="n">timetuple</span><span class="p">()</span><span class="o">.</span><span class="n">tm_yday</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">time</span><span class="p">])</span>
+    <span class="n">dayofyear_cos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">dayofyear</span><span class="o">/</span><span class="mf">365.25</span><span class="p">)</span>
+    <span class="n">dayofyear_sin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">dayofyear</span><span class="o">/</span><span class="mf">365.25</span><span class="p">)</span>
+
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data_full</span> <span class="o">-</span> <span class="n">meandata</span>
+
+    <span class="n">sz</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">sz</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">sz</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">sz</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span><span class="mi">6</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span>
+
+    <span class="n">x</span><span class="p">[:,:,:,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">data</span><span class="o">.</span><span class="n">mask</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">obserrstd</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># error variance</span>
+    <span class="n">x</span><span class="p">[:,:,:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">filled</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">obserrstd</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># scale between -1 and 1</span>
+    <span class="n">lon_scaled</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">lon</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">lon</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">lon</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">lon</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">lat_scaled</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">lat</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">lat</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">lat</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">lat</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span>
+
+    <span class="n">x</span><span class="p">[:,:,:,</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">lon_scaled</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">lon</span><span class="p">))</span>
+    <span class="n">x</span><span class="p">[:,:,:,</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">lat_scaled</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">lat</span><span class="p">),</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">x</span><span class="p">[:,:,:,</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">dayofyear_cos</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dayofyear_cos</span><span class="p">),</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">x</span><span class="p">[:,:,:,</span><span class="mi">5</span><span class="p">]</span> <span class="o">=</span> <span class="n">dayofyear_sin</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dayofyear_sin</span><span class="p">),</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># generator for data</span>
+    <span class="k">def</span> <span class="nf">datagen</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="n">xin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">sz</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">sz</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span><span class="mi">6</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="mi">2</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span>
+            <span class="n">xin</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span>  <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">,:,:,:]</span>
+            <span class="n">xin</span><span class="p">[:,:,</span><span class="mi">6</span><span class="p">:</span><span class="mi">8</span><span class="p">]</span>  <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">),:,:,</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="c1"># previous</span>
+            <span class="n">xin</span><span class="p">[:,:,</span><span class="mi">8</span><span class="p">:</span><span class="mi">10</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">),:,:,</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="c1"># next</span>
+
+
+            <span class="c1"># add missing data during training randomly</span>
+            <span class="k">if</span> <span class="n">train</span><span class="p">:</span>
+                <span class="n">imask</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">missing</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">selmask</span> <span class="o">=</span> <span class="n">missing</span><span class="p">[</span><span class="n">imask</span><span class="p">,:,:]</span>
+
+                <span class="n">xin</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">][</span><span class="n">selmask</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">xin</span><span class="p">[:,:,</span><span class="mi">1</span><span class="p">][</span><span class="n">selmask</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+                <span class="c1"># add jitter</span>
+                <span class="n">xin</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">xin</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">jitter_std</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">sz</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">sz</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+                <span class="n">xin</span><span class="p">[:,:,</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="n">xin</span><span class="p">[:,:,</span><span class="mi">6</span><span class="p">]</span> <span class="o">+</span> <span class="n">jitter_std</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">sz</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">sz</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+                <span class="n">xin</span><span class="p">[:,:,</span><span class="mi">8</span><span class="p">]</span> <span class="o">=</span> <span class="n">xin</span><span class="p">[:,:,</span><span class="mi">8</span><span class="p">]</span> <span class="o">+</span> <span class="n">jitter_std</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">sz</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">sz</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+            <span class="k">yield</span> <span class="p">(</span><span class="n">xin</span><span class="p">,</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">,:,:,</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">datagen</span><span class="p">,</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">meandata</span>
+
+
+<span class="k">def</span> <span class="nf">savesample</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span><span class="n">batch_m_rec</span><span class="p">,</span><span class="n">batch_σ2_rec</span><span class="p">,</span><span class="n">meandata</span><span class="p">,</span><span class="n">lon</span><span class="p">,</span><span class="n">lat</span><span class="p">,</span><span class="n">e</span><span class="p">,</span><span class="n">ii</span><span class="p">,</span><span class="n">offset</span><span class="p">):</span>
+    <span class="n">fill_value</span> <span class="o">=</span> <span class="o">-</span><span class="mf">9999.</span>
+    <span class="n">recdata</span> <span class="o">=</span> <span class="n">batch_m_rec</span> <span class="c1"># + meandata;</span>
+    <span class="n">batch_sigma_rec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">batch_σ2_rec</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">ii</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># create file</span>
+        <span class="n">root_grp</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="n">format</span><span class="o">=</span><span class="s1">&#39;NETCDF4&#39;</span><span class="p">)</span>
+
+        <span class="c1"># dimensions</span>
+        <span class="n">root_grp</span><span class="o">.</span><span class="n">createDimension</span><span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">root_grp</span><span class="o">.</span><span class="n">createDimension</span><span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">lon</span><span class="p">))</span>
+        <span class="n">root_grp</span><span class="o">.</span><span class="n">createDimension</span><span class="p">(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">lat</span><span class="p">))</span>
+
+        <span class="c1"># variables</span>
+        <span class="n">nc_lon</span> <span class="o">=</span> <span class="n">root_grp</span><span class="o">.</span><span class="n">createVariable</span><span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,))</span>
+        <span class="n">nc_lat</span> <span class="o">=</span> <span class="n">root_grp</span><span class="o">.</span><span class="n">createVariable</span><span class="p">(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;lat&#39;</span><span class="p">,))</span>
+        <span class="n">nc_meandata</span> <span class="o">=</span> <span class="n">root_grp</span><span class="o">.</span><span class="n">createVariable</span><span class="p">(</span>
+            <span class="s1">&#39;meandata&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span><span class="s1">&#39;lon&#39;</span><span class="p">),</span>
+            <span class="n">fill_value</span><span class="o">=</span><span class="n">fill_value</span><span class="p">)</span>
+
+        <span class="n">nc_batch_m_rec</span> <span class="o">=</span> <span class="n">root_grp</span><span class="o">.</span><span class="n">createVariable</span><span class="p">(</span>
+            <span class="s1">&#39;batch_m_rec&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="s1">&#39;lon&#39;</span><span class="p">),</span>
+            <span class="n">fill_value</span><span class="o">=</span><span class="n">fill_value</span><span class="p">)</span>
+
+        <span class="n">nc_batch_sigma_rec</span> <span class="o">=</span> <span class="n">root_grp</span><span class="o">.</span><span class="n">createVariable</span><span class="p">(</span>
+            <span class="s1">&#39;batch_sigma_rec&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="s1">&#39;lon&#39;</span><span class="p">,),</span>
+            <span class="n">fill_value</span><span class="o">=</span><span class="n">fill_value</span><span class="p">)</span>
+
+        <span class="c1"># data</span>
+        <span class="n">nc_lon</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">lon</span>
+        <span class="n">nc_lat</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">lat</span>
+        <span class="n">nc_meandata</span><span class="p">[:,:]</span> <span class="o">=</span> <span class="n">meandata</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># append to file</span>
+        <span class="n">root_grp</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span>
+        <span class="n">nc_batch_m_rec</span> <span class="o">=</span> <span class="n">root_grp</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s1">&#39;batch_m_rec&#39;</span><span class="p">]</span>
+        <span class="n">nc_batch_sigma_rec</span> <span class="o">=</span> <span class="n">root_grp</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s1">&#39;batch_sigma_rec&#39;</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">batch_m_rec</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="n">nc_batch_m_rec</span><span class="p">[</span><span class="n">n</span><span class="o">+</span><span class="n">offset</span><span class="p">,:,:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_array</span><span class="p">(</span>
+            <span class="n">batch_m_rec</span><span class="p">[</span><span class="n">n</span><span class="p">,:,:],</span><span class="n">meandata</span><span class="o">.</span><span class="n">mask</span><span class="p">)</span>
+        <span class="n">nc_batch_sigma_rec</span><span class="p">[</span><span class="n">n</span><span class="o">+</span><span class="n">offset</span><span class="p">,:,:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_array</span><span class="p">(</span>
+            <span class="n">batch_sigma_rec</span><span class="p">[</span><span class="n">n</span><span class="p">,:,:],</span><span class="n">meandata</span><span class="o">.</span><span class="n">mask</span><span class="p">)</span>
+
+
+    <span class="n">root_grp</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+
+<span class="c1"># save inversion</span>
+<span class="k">def</span> <span class="nf">sinv</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">minx</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">):</span>
+    <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">tf</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">minx</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">reconstruct</span><span class="p">(</span><span class="n">lon</span><span class="p">,</span><span class="n">lat</span><span class="p">,</span><span class="n">mask</span><span class="p">,</span><span class="n">meandata</span><span class="p">,</span>
+                <span class="n">train_datagen</span><span class="p">,</span><span class="n">train_len</span><span class="p">,</span>
+                <span class="n">test_datagen</span><span class="p">,</span><span class="n">test_len</span><span class="p">,</span>
+                <span class="n">outdir</span><span class="p">,</span>
+                <span class="n">resize_method</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">ResizeMethod</span><span class="o">.</span><span class="n">NEAREST_NEIGHBOR</span><span class="p">,</span>
+                <span class="n">epochs</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+                <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
+                <span class="n">save_each</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+                <span class="n">save_model_each</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
+                <span class="n">skipconnections</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">],</span>
+                <span class="n">dropout_rate_train</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">,</span>
+                <span class="n">tensorboard</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span>
+                <span class="n">truth_uncertain</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span>
+                <span class="n">shuffle_buffer_size</span> <span class="o">=</span> <span class="mi">3</span><span class="o">*</span><span class="mi">15</span><span class="p">,</span>
+                <span class="n">nvar</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+                <span class="n">enc_ksize_internal</span> <span class="o">=</span> <span class="p">[</span><span class="mi">16</span><span class="p">,</span><span class="mi">24</span><span class="p">,</span><span class="mi">36</span><span class="p">,</span><span class="mi">54</span><span class="p">],</span>
+                <span class="n">clip_grad</span> <span class="o">=</span> <span class="mf">5.0</span><span class="p">,</span>
+                <span class="n">regularization_L2_beta</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Train a neural network to reconstruct missing data using the training data set</span>
+<span class="sd">and periodically run the neural network on the test dataset.</span>
+
+<span class="sd">## Parameters</span>
+
+<span class="sd"> * `lon`: longitude in degrees East</span>
+<span class="sd"> * `lat`: latitude in degrees North</span>
+<span class="sd"> * `mask`:  boolean mask where true means the data location is valid,</span>
+<span class="sd">e.g. sea points for sea surface temperature.</span>
+<span class="sd"> * `meandata`: the temporal mean of the data.</span>
+<span class="sd"> * `train_datagen`: generator function returning a single image for training</span>
+<span class="sd"> * `train_len`: number of training images</span>
+<span class="sd"> * `test_datagen`: generator function returning a single image for testing</span>
+<span class="sd"> * `test_len`: number of testing images</span>
+<span class="sd"> * `outdir`: output directory</span>
+
+<span class="sd">## Optional input arguments</span>
+
+<span class="sd"> * `resize_method`: one of the resize methods defined in [TensorFlow](https://www.tensorflow.org/api_docs/python/tf/image/resize_images)</span>
+<span class="sd"> * `epochs`: number of epochs for training the neural network</span>
+<span class="sd"> * `batch_size`: size of a mini-batch</span>
+<span class="sd"> * `save_each`: reconstruct the missing data every `save_each` epoch</span>
+<span class="sd"> * `save_model_each`: save a checkpoint of the neural network every</span>
+<span class="sd">      `save_model_each` epoch</span>
+<span class="sd"> * `skipconnections`: list of indices of convolutional layers with</span>
+<span class="sd">     skip-connections</span>
+<span class="sd"> * `dropout_rate_train`: probability for drop-out during training</span>
+<span class="sd"> * `tensorboard`: activate tensorboard diagnostics</span>
+<span class="sd"> * `truth_uncertain`: how certain you are about the perceived truth?</span>
+<span class="sd"> * `shuffle_buffer_size`: number of images for the shuffle buffer</span>
+<span class="sd"> * `nvar`: number of input variables</span>
+<span class="sd"> * `enc_ksize_internal`: kernel sizes for the internal convolutional layers</span>
+<span class="sd">      (after the input convolutional layer)</span>
+<span class="sd"> * `clip_grad`: clip gradient to a maximum L2-norm.</span>
+<span class="sd"> * `regularization_L2_beta`: scalar to enforce L2 regularization on the weight</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+    <span class="n">enc_ksize</span> <span class="o">=</span> <span class="p">[</span><span class="n">nvar</span><span class="p">]</span> <span class="o">+</span> <span class="n">enc_ksize_internal</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">outdir</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">outdir</span><span class="p">)</span>
+
+    <span class="n">jmax</span><span class="p">,</span><span class="n">imax</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="n">sess</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span>
+
+    <span class="c1"># Repeat the input indefinitely.</span>
+    <span class="c1"># training dataset iterator</span>
+    <span class="n">train_dataset</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataset</span><span class="o">.</span><span class="n">from_generator</span><span class="p">(</span>
+        <span class="n">train_datagen</span><span class="p">,</span> <span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">TensorShape</span><span class="p">([</span><span class="n">jmax</span><span class="p">,</span><span class="n">imax</span><span class="p">,</span><span class="n">nvar</span><span class="p">]),</span><span class="n">tf</span><span class="o">.</span><span class="n">TensorShape</span><span class="p">([</span><span class="n">jmax</span><span class="p">,</span><span class="n">imax</span><span class="p">,</span><span class="mi">2</span><span class="p">])))</span><span class="o">.</span><span class="n">repeat</span><span class="p">()</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">shuffle_buffer_size</span><span class="p">)</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span>
+    <span class="n">train_iterator</span> <span class="o">=</span> <span class="n">train_dataset</span><span class="o">.</span><span class="n">make_one_shot_iterator</span><span class="p">()</span>
+    <span class="n">train_iterator_handle</span> <span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">train_iterator</span><span class="o">.</span><span class="n">string_handle</span><span class="p">())</span>
+
+    <span class="c1"># test dataset without added clouds</span>
+    <span class="c1"># must be reinitializable</span>
+    <span class="n">test_dataset</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataset</span><span class="o">.</span><span class="n">from_generator</span><span class="p">(</span>
+        <span class="n">test_datagen</span><span class="p">,</span> <span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">TensorShape</span><span class="p">([</span><span class="n">jmax</span><span class="p">,</span><span class="n">imax</span><span class="p">,</span><span class="n">nvar</span><span class="p">]),</span><span class="n">tf</span><span class="o">.</span><span class="n">TensorShape</span><span class="p">([</span><span class="n">jmax</span><span class="p">,</span><span class="n">imax</span><span class="p">,</span><span class="mi">2</span><span class="p">])))</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span>
+
+    <span class="n">test_iterator</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Iterator</span><span class="o">.</span><span class="n">from_structure</span><span class="p">(</span><span class="n">test_dataset</span><span class="o">.</span><span class="n">output_types</span><span class="p">,</span>
+                                                    <span class="n">test_dataset</span><span class="o">.</span><span class="n">output_shapes</span><span class="p">)</span>
+    <span class="n">test_iterator_init_op</span> <span class="o">=</span> <span class="n">test_iterator</span><span class="o">.</span><span class="n">make_initializer</span><span class="p">(</span><span class="n">test_dataset</span><span class="p">)</span>
+
+    <span class="n">test_iterator_handle</span> <span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">test_iterator</span><span class="o">.</span><span class="n">string_handle</span><span class="p">())</span>
+
+    <span class="n">handle</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">string</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[],</span> <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;handle_name_iterator&quot;</span><span class="p">)</span>
+    <span class="n">iterator</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Iterator</span><span class="o">.</span><span class="n">from_string_handle</span><span class="p">(</span>
+            <span class="n">handle</span><span class="p">,</span> <span class="n">train_iterator</span><span class="o">.</span><span class="n">output_types</span><span class="p">,</span> <span class="n">output_shapes</span> <span class="o">=</span> <span class="n">train_iterator</span><span class="o">.</span><span class="n">output_shapes</span><span class="p">)</span>
+
+
+    <span class="n">inputs_</span><span class="p">,</span><span class="n">xtrue</span> <span class="o">=</span> <span class="n">iterator</span><span class="o">.</span><span class="n">get_next</span><span class="p">()</span>
+
+
+
+    <span class="c1"># encoder</span>
+    <span class="n">enc_nlayers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">enc_ksize</span><span class="p">)</span>
+    <span class="n">enc_conv</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">enc_nlayers</span>
+    <span class="n">enc_avgpool</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">enc_nlayers</span>
+
+    <span class="n">enc_avgpool</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">inputs_</span>
+
+    <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">enc_nlayers</span><span class="p">):</span>
+        <span class="n">enc_conv</span><span class="p">[</span><span class="n">l</span><span class="p">]</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">conv2d</span><span class="p">(</span><span class="n">enc_avgpool</span><span class="p">[</span><span class="n">l</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                                       <span class="n">enc_ksize</span><span class="p">[</span><span class="n">l</span><span class="p">],</span>
+                                       <span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span>
+                                       <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">,</span>
+                                       <span class="n">activation</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">leaky_relu</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;encoder: output size of convolutional layer: &quot;</span><span class="p">,</span><span class="n">l</span><span class="p">,</span><span class="n">enc_conv</span><span class="p">[</span><span class="n">l</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="n">enc_avgpool</span><span class="p">[</span><span class="n">l</span><span class="p">]</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">average_pooling2d</span><span class="p">(</span><span class="n">enc_conv</span><span class="p">[</span><span class="n">l</span><span class="p">],</span>
+                                                     <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span>
+                                                     <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span>
+                                                     <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">)</span>
+
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;encoder: output size of pooling layer: &quot;</span><span class="p">,</span><span class="n">l</span><span class="p">,</span><span class="n">enc_avgpool</span><span class="p">[</span><span class="n">l</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="n">enc_last</span> <span class="o">=</span> <span class="n">enc_avgpool</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="c1"># Dense Layer</span>
+    <span class="n">ndensein</span> <span class="o">=</span> <span class="n">enc_last</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">num_elements</span><span class="p">()</span>
+
+    <span class="n">avgpool_flat</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">enc_last</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">ndensein</span><span class="p">])</span>
+    <span class="n">dense_units</span> <span class="o">=</span> <span class="p">[</span><span class="n">ndensein</span><span class="o">//</span><span class="mi">5</span><span class="p">]</span>
+
+    <span class="c1"># default is no drop-out</span>
+    <span class="n">dropout_rate</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder_with_default</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">())</span>
+
+    <span class="n">dense</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">]</span> <span class="o">*</span> <span class="mi">5</span>
+    <span class="n">dense</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">avgpool_flat</span>
+    <span class="n">dense</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">dense</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">dense</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                               <span class="n">units</span><span class="o">=</span><span class="n">dense_units</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                               <span class="n">activation</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">)</span>
+    <span class="n">dense</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">dense</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">rate</span><span class="o">=</span><span class="n">dropout_rate</span><span class="p">)</span>
+    <span class="n">dense</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">dense</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">dense</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+                               <span class="n">units</span><span class="o">=</span><span class="n">ndensein</span><span class="p">,</span>
+                               <span class="n">activation</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">)</span>
+    <span class="n">dense</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">dense</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">rate</span><span class="o">=</span><span class="n">dropout_rate</span><span class="p">)</span>
+
+
+    <span class="n">dense_2d</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">dense</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">tf</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">enc_last</span><span class="p">))</span>
+
+    <span class="c1">### Decoder</span>
+    <span class="n">dec_conv</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">enc_nlayers</span>
+    <span class="n">dec_upsample</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">enc_nlayers</span>
+
+    <span class="n">dec_conv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">dense_2d</span>
+
+    <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">enc_nlayers</span><span class="p">):</span>
+        <span class="n">l2</span> <span class="o">=</span> <span class="n">enc_nlayers</span><span class="o">-</span><span class="n">l</span>
+        <span class="n">dec_upsample</span><span class="p">[</span><span class="n">l</span><span class="p">]</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">resize_images</span><span class="p">(</span>
+            <span class="n">dec_conv</span><span class="p">[</span><span class="n">l</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">enc_conv</span><span class="p">[</span><span class="n">l2</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">3</span><span class="p">],</span>
+            <span class="n">method</span><span class="o">=</span><span class="n">resize_method</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;decoder: output size of upsample layer: &quot;</span><span class="p">,</span><span class="n">l</span><span class="p">,</span><span class="n">dec_upsample</span><span class="p">[</span><span class="n">l</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="c1"># short-cut</span>
+        <span class="k">if</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">skipconnections</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;skip connection at &quot;</span><span class="p">,</span><span class="n">l</span><span class="p">)</span>
+            <span class="n">dec_upsample</span><span class="p">[</span><span class="n">l</span><span class="p">]</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">dec_upsample</span><span class="p">[</span><span class="n">l</span><span class="p">],</span><span class="n">enc_avgpool</span><span class="p">[</span><span class="n">l2</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span><span class="mi">3</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;decoder: output size of concatenation: &quot;</span><span class="p">,</span><span class="n">l</span><span class="p">,</span><span class="n">dec_upsample</span><span class="p">[</span><span class="n">l</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="n">dec_conv</span><span class="p">[</span><span class="n">l</span><span class="p">]</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">conv2d</span><span class="p">(</span>
+            <span class="n">dec_upsample</span><span class="p">[</span><span class="n">l</span><span class="p">],</span>
+            <span class="n">enc_ksize</span><span class="p">[</span><span class="n">l2</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+            <span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span>
+            <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">,</span>
+            <span class="n">activation</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">leaky_relu</span><span class="p">)</span>
+
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;decoder: output size of convolutional layer: &quot;</span><span class="p">,</span><span class="n">l</span><span class="p">,</span><span class="n">dec_conv</span><span class="p">[</span><span class="n">l</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+    <span class="c1"># last layer of decoder</span>
+    <span class="n">xrec</span> <span class="o">=</span> <span class="n">dec_conv</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">loginvσ2_rec</span> <span class="o">=</span> <span class="n">xrec</span><span class="p">[:,:,:,</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">invσ2_rec</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">loginvσ2_rec</span><span class="p">,</span><span class="mi">10</span><span class="p">))</span>
+    <span class="err">σ</span><span class="mi">2</span><span class="n">_rec</span> <span class="o">=</span> <span class="n">sinv</span><span class="p">(</span><span class="n">invσ2_rec</span><span class="p">)</span>
+    <span class="n">m_rec</span> <span class="o">=</span> <span class="n">xrec</span><span class="p">[:,:,:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="err">σ</span><span class="mi">2</span><span class="n">_rec</span>
+
+
+    <span class="err">σ</span><span class="mi">2</span><span class="n">_true</span> <span class="o">=</span> <span class="n">sinv</span><span class="p">(</span><span class="n">xtrue</span><span class="p">[:,:,:,</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">m_true</span> <span class="o">=</span> <span class="n">xtrue</span><span class="p">[:,:,:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="err">σ</span><span class="mi">2</span><span class="n">_true</span>
+    <span class="err">σ</span><span class="mi">2</span><span class="n">_in</span> <span class="o">=</span> <span class="n">sinv</span><span class="p">(</span><span class="n">inputs_</span><span class="p">[:,:,:,</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">m_in</span> <span class="o">=</span> <span class="n">inputs_</span><span class="p">[:,:,:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="err">σ</span><span class="mi">2</span><span class="n">_in</span>
+
+
+    <span class="n">difference</span> <span class="o">=</span> <span class="n">m_rec</span> <span class="o">-</span> <span class="n">m_true</span>
+
+    <span class="n">mask_issea</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span>
+        <span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;mask_issea&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 1 if measurement</span>
+    <span class="c1"># 0 if no measurement (cloud or land for SST)</span>
+    <span class="n">mask_noncloud</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">xtrue</span><span class="p">[:,:,:,</span><span class="mi">1</span><span class="p">],</span> <span class="mi">0</span><span class="p">)),</span>
+                            <span class="n">xtrue</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+    <span class="n">n_noncloud</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">mask_noncloud</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">truth_uncertain</span><span class="p">:</span>
+        <span class="c1"># KL divergence between two univariate Gaussians p and q</span>
+        <span class="c1"># p ~ N(σ2_1,\mu_1)</span>
+        <span class="c1"># q ~ N(σ2_2,\mu_2)</span>
+        <span class="c1">#</span>
+        <span class="c1"># 2 KL(p,q) = log(σ2_2/σ2_1) + (σ2_1 + (\mu_1 - \mu_2)^2)/(σ2_2) - 1</span>
+        <span class="c1"># 2 KL(p,q) = log(σ2_2) - log(σ2_1) + (σ2_1 + (\mu_1 - \mu_2)^2)/(σ2_2) - 1</span>
+        <span class="c1"># 2 KL(p_true,q_rec) = log(σ2_rec/σ2_true) + (σ2_true + (\mu_rec - \mu_true)^2)/(σ2_rec) - 1</span>
+
+        <span class="n">cost</span> <span class="o">=</span> <span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span>
+            <span class="n">tf</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="err">σ</span><span class="mi">2</span><span class="n">_rec</span><span class="o">/</span><span class="err">σ</span><span class="mi">2</span><span class="n">_true</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="err">σ</span><span class="mi">2</span><span class="n">_true</span> <span class="o">+</span> <span class="n">difference</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="err">σ</span><span class="mi">2</span><span class="n">_rec</span><span class="p">,</span><span class="n">mask_noncloud</span><span class="p">)))</span> <span class="o">/</span> <span class="n">n_noncloud</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">cost</span> <span class="o">=</span> <span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="err">σ</span><span class="mi">2</span><span class="n">_rec</span><span class="p">),</span><span class="n">mask_noncloud</span><span class="p">))</span> <span class="o">+</span>
+            <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">difference</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="err">σ</span><span class="mi">2</span><span class="n">_rec</span><span class="p">,</span><span class="n">mask_noncloud</span><span class="p">)))</span> <span class="o">/</span> <span class="n">n_noncloud</span>
+
+
+    <span class="c1"># L2 regularization of weights</span>
+    <span class="k">if</span> <span class="n">regularization_L2_beta</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">trainable_variables</span>   <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">trainable_variables</span><span class="p">()</span>
+        <span class="n">lossL2</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">add_n</span><span class="p">([</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">l2_loss</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">trainable_variables</span>
+                            <span class="k">if</span> <span class="s1">&#39;bias&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">name</span> <span class="p">])</span> <span class="o">*</span> <span class="n">regularization_L2_beta</span>
+        <span class="n">cost</span> <span class="o">=</span> <span class="n">cost</span> <span class="o">+</span> <span class="n">lossL2</span>
+
+    <span class="n">RMS</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">difference</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span><span class="n">mask_noncloud</span><span class="p">))</span>
+                  <span class="o">/</span> <span class="n">n_noncloud</span><span class="p">)</span>
+
+    <span class="c1"># to debug</span>
+    <span class="c1"># cost = RMS</span>
+
+    <span class="k">if</span> <span class="n">tensorboard</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="s1">&#39;Validation&#39;</span><span class="p">):</span>
+            <span class="n">tf</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="s1">&#39;RMS&#39;</span><span class="p">,</span> <span class="n">RMS</span><span class="p">)</span>
+            <span class="n">tf</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="s1">&#39;cost&#39;</span><span class="p">,</span> <span class="n">cost</span><span class="p">)</span>
+            <span class="n">tf</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="s2">&quot;m_rec&quot;</span><span class="p">,</span><span class="n">tf</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span>
+                <span class="n">tf</span><span class="o">.</span><span class="n">reverse</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">m_rec</span><span class="p">,</span><span class="n">mask_issea</span><span class="p">),[</span><span class="mi">1</span><span class="p">]),</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+            <span class="n">tf</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="s2">&quot;m_true&quot;</span><span class="p">,</span><span class="n">tf</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span>
+                <span class="n">tf</span><span class="o">.</span><span class="n">reverse</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">m_true</span><span class="p">,</span><span class="n">mask_issea</span><span class="p">),[</span><span class="mi">1</span><span class="p">]),</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+            <span class="n">tf</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="s2">&quot;sigma2_rec&quot;</span><span class="p">,</span><span class="n">tf</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span>
+                <span class="n">tf</span><span class="o">.</span><span class="n">reverse</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="err">σ</span><span class="mi">2</span><span class="n">_rec</span><span class="p">,</span><span class="n">mask_issea</span><span class="p">),[</span><span class="mi">1</span><span class="p">]),</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+
+    <span class="c1"># parameters for Adam optimizer (default values)</span>
+    <span class="n">learning_rate</span> <span class="o">=</span> <span class="mf">1e-3</span>
+    <span class="n">beta1</span> <span class="o">=</span> <span class="mf">0.9</span>
+    <span class="n">beta2</span> <span class="o">=</span> <span class="mf">0.999</span>
+    <span class="n">epsilon</span> <span class="o">=</span> <span class="mf">1e-08</span>
+
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">AdamOptimizer</span><span class="p">(</span><span class="n">learning_rate</span><span class="p">,</span><span class="n">beta1</span><span class="p">,</span><span class="n">beta2</span><span class="p">,</span><span class="n">epsilon</span><span class="p">)</span>
+    <span class="n">gradients</span><span class="p">,</span> <span class="n">variables</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">optimizer</span><span class="o">.</span><span class="n">compute_gradients</span><span class="p">(</span><span class="n">cost</span><span class="p">))</span>
+    <span class="n">gradients</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">clip_by_global_norm</span><span class="p">(</span><span class="n">gradients</span><span class="p">,</span> <span class="n">clip_grad</span><span class="p">)</span>
+    <span class="n">opt</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">apply_gradients</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">gradients</span><span class="p">,</span> <span class="n">variables</span><span class="p">))</span>
+
+    <span class="n">dt_start</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">dt_start</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">tensorboard</span><span class="p">:</span>
+        <span class="n">merged</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">merge_all</span><span class="p">()</span>
+        <span class="n">train_writer</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">FileWriter</span><span class="p">(</span><span class="n">outdir</span> <span class="o">+</span> <span class="s1">&#39;/train&#39;</span><span class="p">,</span>
+                                          <span class="n">sess</span><span class="o">.</span><span class="n">graph</span><span class="p">)</span>
+        <span class="n">test_writer</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">FileWriter</span><span class="p">(</span><span class="n">outdir</span> <span class="o">+</span> <span class="s1">&#39;/test&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># unused</span>
+        <span class="n">merged</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span>
+
+    <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">global_variables_initializer</span><span class="p">())</span>
+
+    <span class="n">saver</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">Saver</span><span class="p">()</span>
+
+    <span class="c1"># loop over epochs</span>
+    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+
+        <span class="c1"># loop over training datasets</span>
+        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ceil</span><span class="p">(</span><span class="n">train_len</span> <span class="o">/</span> <span class="n">batch_size</span><span class="p">)):</span>
+
+            <span class="c1"># run a single step of the optimizer</span>
+            <span class="n">summary</span><span class="p">,</span> <span class="n">batch_cost</span><span class="p">,</span> <span class="n">batch_RMS</span><span class="p">,</span> <span class="n">bs</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">merged</span><span class="p">,</span> <span class="n">cost</span><span class="p">,</span> <span class="n">RMS</span><span class="p">,</span> <span class="n">mask_noncloud</span><span class="p">,</span> <span class="n">opt</span><span class="p">],</span><span class="n">feed_dict</span><span class="o">=</span><span class="p">{</span>
+                    <span class="n">handle</span><span class="p">:</span> <span class="n">train_iterator_handle</span><span class="p">,</span>
+                    <span class="n">mask_issea</span><span class="p">:</span> <span class="n">mask</span><span class="p">,</span>
+                    <span class="n">dropout_rate</span><span class="p">:</span> <span class="n">dropout_rate_train</span><span class="p">})</span>
+
+            <span class="k">if</span> <span class="n">tensorboard</span><span class="p">:</span>
+                <span class="n">train_writer</span><span class="o">.</span><span class="n">add_summary</span><span class="p">(</span><span class="n">summary</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
+
+            <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="k">if</span> <span class="n">ii</span> <span class="o">%</span> <span class="mi">20</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Epoch: {}/{}...&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">epochs</span><span class="p">),</span>
+                      <span class="s2">&quot;Training loss: {:.4f}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">batch_cost</span><span class="p">),</span>
+                      <span class="s2">&quot;RMS: {:.4f}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">batch_RMS</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">e</span> <span class="o">%</span> <span class="n">save_each</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Save output&quot;</span><span class="p">,</span><span class="n">e</span><span class="p">)</span>
+
+            <span class="n">timestr</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H%M%S&quot;</span><span class="p">)</span>
+            <span class="n">fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">outdir</span><span class="p">,</span><span class="s2">&quot;data-{}.nc&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">timestr</span><span class="p">))</span>
+
+            <span class="c1"># reset test iterator, so that we start from the beginning</span>
+            <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">test_iterator_init_op</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ceil</span><span class="p">(</span><span class="n">test_len</span> <span class="o">/</span> <span class="n">batch_size</span><span class="p">)):</span>
+                <span class="n">summary</span><span class="p">,</span> <span class="n">batch_cost</span><span class="p">,</span><span class="n">batch_RMS</span><span class="p">,</span><span class="n">batch_m_rec</span><span class="p">,</span><span class="n">batch_σ2_rec</span> <span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">merged</span><span class="p">,</span> <span class="n">cost</span><span class="p">,</span><span class="n">RMS</span><span class="p">,</span><span class="n">m_rec</span><span class="p">,</span><span class="err">σ</span><span class="mi">2</span><span class="n">_rec</span><span class="p">],</span>
+                    <span class="n">feed_dict</span> <span class="o">=</span> <span class="p">{</span> <span class="n">handle</span><span class="p">:</span> <span class="n">test_iterator_handle</span><span class="p">,</span>
+                                  <span class="n">mask_issea</span><span class="p">:</span> <span class="n">mask</span> <span class="p">})</span>
+
+                <span class="c1"># time instances already written</span>
+                <span class="n">offset</span> <span class="o">=</span> <span class="n">ii</span><span class="o">*</span><span class="n">batch_size</span>
+                <span class="n">savesample</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span><span class="n">batch_m_rec</span><span class="p">,</span><span class="n">batch_σ2_rec</span><span class="p">,</span><span class="n">meandata</span><span class="p">,</span><span class="n">lon</span><span class="p">,</span><span class="n">lat</span><span class="p">,</span><span class="n">e</span><span class="p">,</span><span class="n">ii</span><span class="p">,</span>
+                           <span class="n">offset</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">e</span> <span class="o">%</span> <span class="n">save_model_each</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">save_path</span> <span class="o">=</span> <span class="n">saver</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">sess</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">outdir</span><span class="p">,</span><span class="s2">&quot;model-{:03d}.ckpt&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="o">+</span><span class="mi">1</span><span class="p">)))</span>
+
+    <span class="n">dt_end</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">dt_end</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">dt_end</span> <span class="o">-</span> <span class="n">dt_start</span><span class="p">)</span>
+
+
+
+<span class="k">def</span> <span class="nf">reconstruct_gridded_nc</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span><span class="n">varname</span><span class="p">,</span><span class="n">outdir</span><span class="p">,</span>
+                           <span class="n">jitter_std</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
+                           <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Train a neural network to reconstruct missing data from the NetCDF variable</span>
+<span class="sd">`varname` in the NetCDF file `filename`. Results are saved in the output</span>
+<span class="sd">directory `outdir`. `jitter_std` is the standard deviation of the noise to be</span>
+<span class="sd">added to the data during training.</span>
+<span class="sd">See `DINCAE.reconstruct` for other keyword arguments and</span>
+<span class="sd">`DINCAE.load_gridded_nc` for the NetCDF format.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+    <span class="n">lon</span><span class="p">,</span><span class="n">lat</span><span class="p">,</span><span class="n">time</span><span class="p">,</span><span class="n">data</span><span class="p">,</span><span class="n">missing</span><span class="p">,</span><span class="n">mask</span> <span class="o">=</span> <span class="n">load_gridded_nc</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span><span class="n">varname</span><span class="p">)</span>
+    <span class="n">train_datagen</span><span class="p">,</span><span class="n">train_len</span><span class="p">,</span><span class="n">meandata</span> <span class="o">=</span> <span class="n">data_generator</span><span class="p">(</span>
+        <span class="n">lon</span><span class="p">,</span><span class="n">lat</span><span class="p">,</span><span class="n">time</span><span class="p">,</span><span class="n">data</span><span class="p">,</span><span class="n">missing</span><span class="p">,</span>
+        <span class="n">jitter_std</span> <span class="o">=</span> <span class="n">jitter_std</span><span class="p">)</span>
+    <span class="n">test_datagen</span><span class="p">,</span><span class="n">test_len</span><span class="p">,</span><span class="n">test_meandata</span> <span class="o">=</span> <span class="n">data_generator</span><span class="p">(</span>
+        <span class="n">lon</span><span class="p">,</span><span class="n">lat</span><span class="p">,</span><span class="n">time</span><span class="p">,</span><span class="n">data</span><span class="p">,</span><span class="n">missing</span><span class="p">,</span>
+        <span class="n">train</span> <span class="o">=</span> <span class="bp">False</span><span class="p">)</span>
+
+    <span class="n">reconstruct</span><span class="p">(</span>
+        <span class="n">lon</span><span class="p">,</span><span class="n">lat</span><span class="p">,</span><span class="n">mask</span><span class="p">,</span><span class="n">meandata</span><span class="p">,</span>
+        <span class="n">train_datagen</span><span class="p">,</span><span class="n">train_len</span><span class="p">,</span>
+        <span class="n">test_datagen</span><span class="p">,</span><span class="n">test_len</span><span class="p">,</span>
+        <span class="n">outdir</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<span class="c1">#  LocalWords:  DINCAE Convolutional MERCHANTABILITY gridded</span>
+<span class="c1">#  LocalWords:  TensorBoard stddev varname NetCDF fname lon numpy datetime</span>
+<span class="c1">#  LocalWords:  boolean netcdf FillValue obserrstd datagen ntime meandata</span>
+</pre></div>
+
+  </div>
+
+  </header>
+
+  <section id="section-items">
+
+    <h2 class="section-title" id="header-functions">Functions</h2>
+      
+  <div class="item">
+    <div class="name def" id="DINCAE.data_generator">
+    <p>def <span class="ident">data_generator</span>(</p><p>lon, lat, time, data_full, missing, train=True, obserrstd=1.0, jitter_std=0.05)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Return a generator for training (<code>train = True</code>) or testing (<code>train = False</code>)
+the neural network. <code>obserrstd</code> is the error standard deviation of the
+observations. The variable <code>lon</code> is the longitude in degrees east, <code>lat</code> is the
+latitude in degrees North, <code>time</code> is a numpy datetime vector, <code>data_full</code> is a
+3-d array with the data and <code>missing</code> is a boolean mask where true means the data is
+missing. <code>jitter_std</code> is the standard deviation of the noise to be added to the
+data during training.</p>
+<p>The output of this function is <code>datagen</code>, <code>ntime</code> and <code>meandata</code>. <code>datagen</code> is a
+generator function returning a single image (relative to the mean <code>meandata</code>),
+<code>ntime</code> the number of time instances for training or testing and <code>meandata</code> is
+the temporal mean of the data.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-DINCAE.data_generator', this);">Show source &equiv;</a></p>
+  <div id="source-DINCAE.data_generator" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">data_generator</span><span class="p">(</span><span class="n">lon</span><span class="p">,</span><span class="n">lat</span><span class="p">,</span><span class="n">time</span><span class="p">,</span><span class="n">data_full</span><span class="p">,</span><span class="n">missing</span><span class="p">,</span>
+                   <span class="n">train</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>
+                   <span class="n">obserrstd</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span>
+                   <span class="n">jitter_std</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Return a generator for training (`train = True`) or testing (`train = False`)</span>
+<span class="sd">the neural network. `obserrstd` is the error standard deviation of the</span>
+<span class="sd">observations. The variable `lon` is the longitude in degrees east, `lat` is the</span>
+<span class="sd">latitude in degrees North, `time` is a numpy datetime vector, `data_full` is a</span>
+<span class="sd">3-d array with the data and `missing` is a boolean mask where true means the data is</span>
+<span class="sd">missing. `jitter_std` is the standard deviation of the noise to be added to the</span>
+<span class="sd">data during training.</span>
+
+<span class="sd">The output of this function is `datagen`, `ntime` and `meandata`. `datagen` is a</span>
+<span class="sd">generator function returning a single image (relative to the mean `meandata`),</span>
+<span class="sd">`ntime` the number of time instances for training or testing and `meandata` is</span>
+<span class="sd">the temporal mean of the data.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+    <span class="n">ntime</span> <span class="o">=</span> <span class="n">data_full</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">meandata</span> <span class="o">=</span> <span class="n">data_full</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">keepdims</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="n">dayofyear</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">d</span><span class="o">.</span><span class="n">timetuple</span><span class="p">()</span><span class="o">.</span><span class="n">tm_yday</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">time</span><span class="p">])</span>
+    <span class="n">dayofyear_cos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">dayofyear</span><span class="o">/</span><span class="mf">365.25</span><span class="p">)</span>
+    <span class="n">dayofyear_sin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">dayofyear</span><span class="o">/</span><span class="mf">365.25</span><span class="p">)</span>
+
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data_full</span> <span class="o">-</span> <span class="n">meandata</span>
+
+    <span class="n">sz</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">sz</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">sz</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">sz</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span><span class="mi">6</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span>
+
+    <span class="n">x</span><span class="p">[:,:,:,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">data</span><span class="o">.</span><span class="n">mask</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">obserrstd</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># error variance</span>
+    <span class="n">x</span><span class="p">[:,:,:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">filled</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">obserrstd</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># scale between -1 and 1</span>
+    <span class="n">lon_scaled</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">lon</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">lon</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">lon</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">lon</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">lat_scaled</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">lat</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">lat</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">lat</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">lat</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span>
+
+    <span class="n">x</span><span class="p">[:,:,:,</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">lon_scaled</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">lon</span><span class="p">))</span>
+    <span class="n">x</span><span class="p">[:,:,:,</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">lat_scaled</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">lat</span><span class="p">),</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">x</span><span class="p">[:,:,:,</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">dayofyear_cos</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dayofyear_cos</span><span class="p">),</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">x</span><span class="p">[:,:,:,</span><span class="mi">5</span><span class="p">]</span> <span class="o">=</span> <span class="n">dayofyear_sin</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dayofyear_sin</span><span class="p">),</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># generator for data</span>
+    <span class="k">def</span> <span class="nf">datagen</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="n">xin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">sz</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">sz</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span><span class="mi">6</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="mi">2</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span>
+            <span class="n">xin</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span>  <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">,:,:,:]</span>
+            <span class="n">xin</span><span class="p">[:,:,</span><span class="mi">6</span><span class="p">:</span><span class="mi">8</span><span class="p">]</span>  <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">),:,:,</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="c1"># previous</span>
+            <span class="n">xin</span><span class="p">[:,:,</span><span class="mi">8</span><span class="p">:</span><span class="mi">10</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">),:,:,</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="c1"># next</span>
+
+
+            <span class="c1"># add missing data during training randomly</span>
+            <span class="k">if</span> <span class="n">train</span><span class="p">:</span>
+                <span class="n">imask</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">missing</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">selmask</span> <span class="o">=</span> <span class="n">missing</span><span class="p">[</span><span class="n">imask</span><span class="p">,:,:]</span>
+
+                <span class="n">xin</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">][</span><span class="n">selmask</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">xin</span><span class="p">[:,:,</span><span class="mi">1</span><span class="p">][</span><span class="n">selmask</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+                <span class="c1"># add jitter</span>
+                <span class="n">xin</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">xin</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">jitter_std</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">sz</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">sz</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+                <span class="n">xin</span><span class="p">[:,:,</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="n">xin</span><span class="p">[:,:,</span><span class="mi">6</span><span class="p">]</span> <span class="o">+</span> <span class="n">jitter_std</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">sz</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">sz</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+                <span class="n">xin</span><span class="p">[:,:,</span><span class="mi">8</span><span class="p">]</span> <span class="o">=</span> <span class="n">xin</span><span class="p">[:,:,</span><span class="mi">8</span><span class="p">]</span> <span class="o">+</span> <span class="n">jitter_std</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">sz</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">sz</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+            <span class="k">yield</span> <span class="p">(</span><span class="n">xin</span><span class="p">,</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">,:,:,</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">datagen</span><span class="p">,</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">meandata</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="DINCAE.load_gridded_nc">
+    <p>def <span class="ident">load_gridded_nc</span>(</p><p>fname, varname)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Load the variable <code>varname</code> from the NetCDF file <code>fname</code>. The variable <code>lon</code> is
+the longitude in degrees east, <code>lat</code> is the latitude in degrees North, <code>time</code> is
+a numpy datetime vector, <code>data_full</code> is a 3-d array with the data, <code>missing</code>
+is a boolean mask where true means the data is missing and <code>mask</code> is a boolean mask
+where true means the data location is valid, e.g. sea points for sea surface temperature.</p>
+<p>At the bare-minimum a NetCDF file should have the following variables and
+attributes:</p>
+<div class="codehilite"><pre><span></span>netcdf file.nc {
+dimensions:
+        time = UNLIMITED ; // (5266 currently)
+        lat = 112 ;
+        lon = 112 ;
+variables:
+        double lon(lon) ;
+        double lat(lat) ;
+        double time(time) ;
+                time:units = &quot;days since 1900-01-01 00:00:00&quot; ;
+        int mask(lat, lon) ;
+        float SST(time, lat, lon) ;
+                SST:_FillValue = -9999.f ;
+}
+</pre></div></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-DINCAE.load_gridded_nc', this);">Show source &equiv;</a></p>
+  <div id="source-DINCAE.load_gridded_nc" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">load_gridded_nc</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span><span class="n">varname</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Load the variable `varname` from the NetCDF file `fname`. The variable `lon` is</span>
+<span class="sd">the longitude in degrees east, `lat` is the latitude in degrees North, `time` is</span>
+<span class="sd">a numpy datetime vector, `data_full` is a 3-d array with the data, `missing`</span>
+<span class="sd">is a boolean mask where true means the data is missing and `mask` is a boolean mask</span>
+<span class="sd">where true means the data location is valid, e.g. sea points for sea surface temperature.</span>
+
+<span class="sd">At the bare-minimum a NetCDF file should have the following variables and</span>
+<span class="sd">attributes:</span>
+
+
+<span class="sd">    netcdf file.nc {</span>
+<span class="sd">    dimensions:</span>
+<span class="sd">            time = UNLIMITED ; // (5266 currently)</span>
+<span class="sd">            lat = 112 ;</span>
+<span class="sd">            lon = 112 ;</span>
+<span class="sd">    variables:</span>
+<span class="sd">            double lon(lon) ;</span>
+<span class="sd">            double lat(lat) ;</span>
+<span class="sd">            double time(time) ;</span>
+<span class="sd">                    time:units = &quot;days since 1900-01-01 00:00:00&quot; ;</span>
+<span class="sd">            int mask(lat, lon) ;</span>
+<span class="sd">            float SST(time, lat, lon) ;</span>
+<span class="sd">                    SST:_FillValue = -9999.f ;</span>
+<span class="sd">    }</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">fname</span><span class="p">);</span>
+    <span class="n">lon</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;lon&quot;</span><span class="p">][:]</span><span class="o">.</span><span class="n">data</span><span class="p">;</span>
+    <span class="n">lat</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;lat&quot;</span><span class="p">][:]</span><span class="o">.</span><span class="n">data</span><span class="p">;</span>
+    <span class="n">time</span> <span class="o">=</span> <span class="n">num2date</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">][:],</span><span class="n">ds</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">units</span><span class="p">);</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">varname</span><span class="p">][:,:,:];</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">][:,:]</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="mi">1</span><span class="p">;</span>
+
+    <span class="n">ds</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">missing</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">mask</span>
+
+    <span class="k">return</span> <span class="n">lon</span><span class="p">,</span><span class="n">lat</span><span class="p">,</span><span class="n">time</span><span class="p">,</span><span class="n">data</span><span class="p">,</span><span class="n">missing</span><span class="p">,</span><span class="n">mask</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="DINCAE.reconstruct">
+    <p>def <span class="ident">reconstruct</span>(</p><p>lon, lat, mask, meandata, train_datagen, train_len, test_datagen, test_len, outdir, resize_method=1, epochs=1000, batch_size=30, save_each=10, save_model_each=500, skipconnections=[1, 2, 3, 4], dropout_rate_train=0.3, tensorboard=False, truth_uncertain=False, shuffle_buffer_size=45, nvar=10, enc_ksize_internal=[16, 24, 36, 54], clip_grad=5.0, regularization_L2_beta=0)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Train a neural network to reconstruct missing data using the training data set
+and periodically run the neural network on the test dataset.</p>
+<h2>Parameters</h2>
+<ul>
+<li><code>lon</code>: longitude in degrees East</li>
+<li><code>lat</code>: latitude in degrees North</li>
+<li><code>mask</code>:  boolean mask where true means the data location is valid,
+e.g. sea points for sea surface temperature.</li>
+<li><code>meandata</code>: the temporal mean of the data.</li>
+<li><code>train_datagen</code>: generator function returning a single image for training</li>
+<li><code>train_len</code>: number of training images</li>
+<li><code>test_datagen</code>: generator function returning a single image for testing</li>
+<li><code>test_len</code>: number of testing images</li>
+<li><code>outdir</code>: output directory</li>
+</ul>
+<h2>Optional input arguments</h2>
+<ul>
+<li><code>resize_method</code>: one of the resize methods defined in <a href="https://www.tensorflow.org/api_docs/python/tf/image/resize_images">TensorFlow</a></li>
+<li><code>epochs</code>: number of epochs for training the neural network</li>
+<li><code>batch_size</code>: size of a mini-batch</li>
+<li><code>save_each</code>: reconstruct the missing data every <code>save_each</code> epoch</li>
+<li><code>save_model_each</code>: save a checkpoint of the neural network every
+      <code>save_model_each</code> epoch</li>
+<li><code>skipconnections</code>: list of indices of convolutional layers with
+     skip-connections</li>
+<li><code>dropout_rate_train</code>: probability for drop-out during training</li>
+<li><code>tensorboard</code>: activate tensorboard diagnostics</li>
+<li><code>truth_uncertain</code>: how certain you are about the perceived truth?</li>
+<li><code>shuffle_buffer_size</code>: number of images for the shuffle buffer</li>
+<li><code>nvar</code>: number of input variables</li>
+<li><code>enc_ksize_internal</code>: kernel sizes for the internal convolutional layers
+      (after the input convolutional layer)</li>
+<li><code>clip_grad</code>: clip gradient to a maximum L2-norm.</li>
+<li><code>regularization_L2_beta</code>: scalar to enforce L2 regularization on the weight</li>
+</ul></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-DINCAE.reconstruct', this);">Show source &equiv;</a></p>
+  <div id="source-DINCAE.reconstruct" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">reconstruct</span><span class="p">(</span><span class="n">lon</span><span class="p">,</span><span class="n">lat</span><span class="p">,</span><span class="n">mask</span><span class="p">,</span><span class="n">meandata</span><span class="p">,</span>
+                <span class="n">train_datagen</span><span class="p">,</span><span class="n">train_len</span><span class="p">,</span>
+                <span class="n">test_datagen</span><span class="p">,</span><span class="n">test_len</span><span class="p">,</span>
+                <span class="n">outdir</span><span class="p">,</span>
+                <span class="n">resize_method</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">ResizeMethod</span><span class="o">.</span><span class="n">NEAREST_NEIGHBOR</span><span class="p">,</span>
+                <span class="n">epochs</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+                <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
+                <span class="n">save_each</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+                <span class="n">save_model_each</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
+                <span class="n">skipconnections</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">],</span>
+                <span class="n">dropout_rate_train</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">,</span>
+                <span class="n">tensorboard</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span>
+                <span class="n">truth_uncertain</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span>
+                <span class="n">shuffle_buffer_size</span> <span class="o">=</span> <span class="mi">3</span><span class="o">*</span><span class="mi">15</span><span class="p">,</span>
+                <span class="n">nvar</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+                <span class="n">enc_ksize_internal</span> <span class="o">=</span> <span class="p">[</span><span class="mi">16</span><span class="p">,</span><span class="mi">24</span><span class="p">,</span><span class="mi">36</span><span class="p">,</span><span class="mi">54</span><span class="p">],</span>
+                <span class="n">clip_grad</span> <span class="o">=</span> <span class="mf">5.0</span><span class="p">,</span>
+                <span class="n">regularization_L2_beta</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Train a neural network to reconstruct missing data using the training data set</span>
+<span class="sd">and periodically run the neural network on the test dataset.</span>
+
+<span class="sd">## Parameters</span>
+
+<span class="sd"> * `lon`: longitude in degrees East</span>
+<span class="sd"> * `lat`: latitude in degrees North</span>
+<span class="sd"> * `mask`:  boolean mask where true means the data location is valid,</span>
+<span class="sd">e.g. sea points for sea surface temperature.</span>
+<span class="sd"> * `meandata`: the temporal mean of the data.</span>
+<span class="sd"> * `train_datagen`: generator function returning a single image for training</span>
+<span class="sd"> * `train_len`: number of training images</span>
+<span class="sd"> * `test_datagen`: generator function returning a single image for testing</span>
+<span class="sd"> * `test_len`: number of testing images</span>
+<span class="sd"> * `outdir`: output directory</span>
+
+<span class="sd">## Optional input arguments</span>
+
+<span class="sd"> * `resize_method`: one of the resize methods defined in [TensorFlow](https://www.tensorflow.org/api_docs/python/tf/image/resize_images)</span>
+<span class="sd"> * `epochs`: number of epochs for training the neural network</span>
+<span class="sd"> * `batch_size`: size of a mini-batch</span>
+<span class="sd"> * `save_each`: reconstruct the missing data every `save_each` epoch</span>
+<span class="sd"> * `save_model_each`: save a checkpoint of the neural network every</span>
+<span class="sd">      `save_model_each` epoch</span>
+<span class="sd"> * `skipconnections`: list of indices of convolutional layers with</span>
+<span class="sd">     skip-connections</span>
+<span class="sd"> * `dropout_rate_train`: probability for drop-out during training</span>
+<span class="sd"> * `tensorboard`: activate tensorboard diagnostics</span>
+<span class="sd"> * `truth_uncertain`: how certain you are about the perceived truth?</span>
+<span class="sd"> * `shuffle_buffer_size`: number of images for the shuffle buffer</span>
+<span class="sd"> * `nvar`: number of input variables</span>
+<span class="sd"> * `enc_ksize_internal`: kernel sizes for the internal convolutional layers</span>
+<span class="sd">      (after the input convolutional layer)</span>
+<span class="sd"> * `clip_grad`: clip gradient to a maximum L2-norm.</span>
+<span class="sd"> * `regularization_L2_beta`: scalar to enforce L2 regularization on the weight</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+    <span class="n">enc_ksize</span> <span class="o">=</span> <span class="p">[</span><span class="n">nvar</span><span class="p">]</span> <span class="o">+</span> <span class="n">enc_ksize_internal</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">outdir</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">outdir</span><span class="p">)</span>
+
+    <span class="n">jmax</span><span class="p">,</span><span class="n">imax</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="n">sess</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span>
+
+    <span class="c1"># Repeat the input indefinitely.</span>
+    <span class="c1"># training dataset iterator</span>
+    <span class="n">train_dataset</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataset</span><span class="o">.</span><span class="n">from_generator</span><span class="p">(</span>
+        <span class="n">train_datagen</span><span class="p">,</span> <span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">TensorShape</span><span class="p">([</span><span class="n">jmax</span><span class="p">,</span><span class="n">imax</span><span class="p">,</span><span class="n">nvar</span><span class="p">]),</span><span class="n">tf</span><span class="o">.</span><span class="n">TensorShape</span><span class="p">([</span><span class="n">jmax</span><span class="p">,</span><span class="n">imax</span><span class="p">,</span><span class="mi">2</span><span class="p">])))</span><span class="o">.</span><span class="n">repeat</span><span class="p">()</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">shuffle_buffer_size</span><span class="p">)</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span>
+    <span class="n">train_iterator</span> <span class="o">=</span> <span class="n">train_dataset</span><span class="o">.</span><span class="n">make_one_shot_iterator</span><span class="p">()</span>
+    <span class="n">train_iterator_handle</span> <span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">train_iterator</span><span class="o">.</span><span class="n">string_handle</span><span class="p">())</span>
+
+    <span class="c1"># test dataset without added clouds</span>
+    <span class="c1"># must be reinitializable</span>
+    <span class="n">test_dataset</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataset</span><span class="o">.</span><span class="n">from_generator</span><span class="p">(</span>
+        <span class="n">test_datagen</span><span class="p">,</span> <span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">TensorShape</span><span class="p">([</span><span class="n">jmax</span><span class="p">,</span><span class="n">imax</span><span class="p">,</span><span class="n">nvar</span><span class="p">]),</span><span class="n">tf</span><span class="o">.</span><span class="n">TensorShape</span><span class="p">([</span><span class="n">jmax</span><span class="p">,</span><span class="n">imax</span><span class="p">,</span><span class="mi">2</span><span class="p">])))</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span>
+
+    <span class="n">test_iterator</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Iterator</span><span class="o">.</span><span class="n">from_structure</span><span class="p">(</span><span class="n">test_dataset</span><span class="o">.</span><span class="n">output_types</span><span class="p">,</span>
+                                                    <span class="n">test_dataset</span><span class="o">.</span><span class="n">output_shapes</span><span class="p">)</span>
+    <span class="n">test_iterator_init_op</span> <span class="o">=</span> <span class="n">test_iterator</span><span class="o">.</span><span class="n">make_initializer</span><span class="p">(</span><span class="n">test_dataset</span><span class="p">)</span>
+
+    <span class="n">test_iterator_handle</span> <span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">test_iterator</span><span class="o">.</span><span class="n">string_handle</span><span class="p">())</span>
+
+    <span class="n">handle</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">string</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[],</span> <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;handle_name_iterator&quot;</span><span class="p">)</span>
+    <span class="n">iterator</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Iterator</span><span class="o">.</span><span class="n">from_string_handle</span><span class="p">(</span>
+            <span class="n">handle</span><span class="p">,</span> <span class="n">train_iterator</span><span class="o">.</span><span class="n">output_types</span><span class="p">,</span> <span class="n">output_shapes</span> <span class="o">=</span> <span class="n">train_iterator</span><span class="o">.</span><span class="n">output_shapes</span><span class="p">)</span>
+
+
+    <span class="n">inputs_</span><span class="p">,</span><span class="n">xtrue</span> <span class="o">=</span> <span class="n">iterator</span><span class="o">.</span><span class="n">get_next</span><span class="p">()</span>
+
+
+
+    <span class="c1"># encoder</span>
+    <span class="n">enc_nlayers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">enc_ksize</span><span class="p">)</span>
+    <span class="n">enc_conv</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">enc_nlayers</span>
+    <span class="n">enc_avgpool</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">enc_nlayers</span>
+
+    <span class="n">enc_avgpool</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">inputs_</span>
+
+    <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">enc_nlayers</span><span class="p">):</span>
+        <span class="n">enc_conv</span><span class="p">[</span><span class="n">l</span><span class="p">]</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">conv2d</span><span class="p">(</span><span class="n">enc_avgpool</span><span class="p">[</span><span class="n">l</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                                       <span class="n">enc_ksize</span><span class="p">[</span><span class="n">l</span><span class="p">],</span>
+                                       <span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span>
+                                       <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">,</span>
+                                       <span class="n">activation</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">leaky_relu</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;encoder: output size of convolutional layer: &quot;</span><span class="p">,</span><span class="n">l</span><span class="p">,</span><span class="n">enc_conv</span><span class="p">[</span><span class="n">l</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="n">enc_avgpool</span><span class="p">[</span><span class="n">l</span><span class="p">]</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">average_pooling2d</span><span class="p">(</span><span class="n">enc_conv</span><span class="p">[</span><span class="n">l</span><span class="p">],</span>
+                                                     <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span>
+                                                     <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span>
+                                                     <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">)</span>
+
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;encoder: output size of pooling layer: &quot;</span><span class="p">,</span><span class="n">l</span><span class="p">,</span><span class="n">enc_avgpool</span><span class="p">[</span><span class="n">l</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="n">enc_last</span> <span class="o">=</span> <span class="n">enc_avgpool</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="c1"># Dense Layer</span>
+    <span class="n">ndensein</span> <span class="o">=</span> <span class="n">enc_last</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">num_elements</span><span class="p">()</span>
+
+    <span class="n">avgpool_flat</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">enc_last</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">ndensein</span><span class="p">])</span>
+    <span class="n">dense_units</span> <span class="o">=</span> <span class="p">[</span><span class="n">ndensein</span><span class="o">//</span><span class="mi">5</span><span class="p">]</span>
+
+    <span class="c1"># default is no drop-out</span>
+    <span class="n">dropout_rate</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder_with_default</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">())</span>
+
+    <span class="n">dense</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">]</span> <span class="o">*</span> <span class="mi">5</span>
+    <span class="n">dense</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">avgpool_flat</span>
+    <span class="n">dense</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">dense</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">dense</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                               <span class="n">units</span><span class="o">=</span><span class="n">dense_units</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                               <span class="n">activation</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">)</span>
+    <span class="n">dense</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">dense</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">rate</span><span class="o">=</span><span class="n">dropout_rate</span><span class="p">)</span>
+    <span class="n">dense</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">dense</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">dense</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+                               <span class="n">units</span><span class="o">=</span><span class="n">ndensein</span><span class="p">,</span>
+                               <span class="n">activation</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">)</span>
+    <span class="n">dense</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">dense</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">rate</span><span class="o">=</span><span class="n">dropout_rate</span><span class="p">)</span>
+
+
+    <span class="n">dense_2d</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">dense</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">tf</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">enc_last</span><span class="p">))</span>
+
+    <span class="c1">### Decoder</span>
+    <span class="n">dec_conv</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">enc_nlayers</span>
+    <span class="n">dec_upsample</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">enc_nlayers</span>
+
+    <span class="n">dec_conv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">dense_2d</span>
+
+    <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">enc_nlayers</span><span class="p">):</span>
+        <span class="n">l2</span> <span class="o">=</span> <span class="n">enc_nlayers</span><span class="o">-</span><span class="n">l</span>
+        <span class="n">dec_upsample</span><span class="p">[</span><span class="n">l</span><span class="p">]</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">resize_images</span><span class="p">(</span>
+            <span class="n">dec_conv</span><span class="p">[</span><span class="n">l</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">enc_conv</span><span class="p">[</span><span class="n">l2</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">3</span><span class="p">],</span>
+            <span class="n">method</span><span class="o">=</span><span class="n">resize_method</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;decoder: output size of upsample layer: &quot;</span><span class="p">,</span><span class="n">l</span><span class="p">,</span><span class="n">dec_upsample</span><span class="p">[</span><span class="n">l</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="c1"># short-cut</span>
+        <span class="k">if</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">skipconnections</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;skip connection at &quot;</span><span class="p">,</span><span class="n">l</span><span class="p">)</span>
+            <span class="n">dec_upsample</span><span class="p">[</span><span class="n">l</span><span class="p">]</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">dec_upsample</span><span class="p">[</span><span class="n">l</span><span class="p">],</span><span class="n">enc_avgpool</span><span class="p">[</span><span class="n">l2</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span><span class="mi">3</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;decoder: output size of concatenation: &quot;</span><span class="p">,</span><span class="n">l</span><span class="p">,</span><span class="n">dec_upsample</span><span class="p">[</span><span class="n">l</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="n">dec_conv</span><span class="p">[</span><span class="n">l</span><span class="p">]</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">conv2d</span><span class="p">(</span>
+            <span class="n">dec_upsample</span><span class="p">[</span><span class="n">l</span><span class="p">],</span>
+            <span class="n">enc_ksize</span><span class="p">[</span><span class="n">l2</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+            <span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span>
+            <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">,</span>
+            <span class="n">activation</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">leaky_relu</span><span class="p">)</span>
+
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;decoder: output size of convolutional layer: &quot;</span><span class="p">,</span><span class="n">l</span><span class="p">,</span><span class="n">dec_conv</span><span class="p">[</span><span class="n">l</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+    <span class="c1"># last layer of decoder</span>
+    <span class="n">xrec</span> <span class="o">=</span> <span class="n">dec_conv</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">loginvσ2_rec</span> <span class="o">=</span> <span class="n">xrec</span><span class="p">[:,:,:,</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">invσ2_rec</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">loginvσ2_rec</span><span class="p">,</span><span class="mi">10</span><span class="p">))</span>
+    <span class="err">σ</span><span class="mi">2</span><span class="n">_rec</span> <span class="o">=</span> <span class="n">sinv</span><span class="p">(</span><span class="n">invσ2_rec</span><span class="p">)</span>
+    <span class="n">m_rec</span> <span class="o">=</span> <span class="n">xrec</span><span class="p">[:,:,:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="err">σ</span><span class="mi">2</span><span class="n">_rec</span>
+
+
+    <span class="err">σ</span><span class="mi">2</span><span class="n">_true</span> <span class="o">=</span> <span class="n">sinv</span><span class="p">(</span><span class="n">xtrue</span><span class="p">[:,:,:,</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">m_true</span> <span class="o">=</span> <span class="n">xtrue</span><span class="p">[:,:,:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="err">σ</span><span class="mi">2</span><span class="n">_true</span>
+    <span class="err">σ</span><span class="mi">2</span><span class="n">_in</span> <span class="o">=</span> <span class="n">sinv</span><span class="p">(</span><span class="n">inputs_</span><span class="p">[:,:,:,</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">m_in</span> <span class="o">=</span> <span class="n">inputs_</span><span class="p">[:,:,:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="err">σ</span><span class="mi">2</span><span class="n">_in</span>
+
+
+    <span class="n">difference</span> <span class="o">=</span> <span class="n">m_rec</span> <span class="o">-</span> <span class="n">m_true</span>
+
+    <span class="n">mask_issea</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span>
+        <span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;mask_issea&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 1 if measurement</span>
+    <span class="c1"># 0 if no measurement (cloud or land for SST)</span>
+    <span class="n">mask_noncloud</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">xtrue</span><span class="p">[:,:,:,</span><span class="mi">1</span><span class="p">],</span> <span class="mi">0</span><span class="p">)),</span>
+                            <span class="n">xtrue</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+    <span class="n">n_noncloud</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">mask_noncloud</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">truth_uncertain</span><span class="p">:</span>
+        <span class="c1"># KL divergence between two univariate Gaussians p and q</span>
+        <span class="c1"># p ~ N(σ2_1,\mu_1)</span>
+        <span class="c1"># q ~ N(σ2_2,\mu_2)</span>
+        <span class="c1">#</span>
+        <span class="c1"># 2 KL(p,q) = log(σ2_2/σ2_1) + (σ2_1 + (\mu_1 - \mu_2)^2)/(σ2_2) - 1</span>
+        <span class="c1"># 2 KL(p,q) = log(σ2_2) - log(σ2_1) + (σ2_1 + (\mu_1 - \mu_2)^2)/(σ2_2) - 1</span>
+        <span class="c1"># 2 KL(p_true,q_rec) = log(σ2_rec/σ2_true) + (σ2_true + (\mu_rec - \mu_true)^2)/(σ2_rec) - 1</span>
+
+        <span class="n">cost</span> <span class="o">=</span> <span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span>
+            <span class="n">tf</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="err">σ</span><span class="mi">2</span><span class="n">_rec</span><span class="o">/</span><span class="err">σ</span><span class="mi">2</span><span class="n">_true</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="err">σ</span><span class="mi">2</span><span class="n">_true</span> <span class="o">+</span> <span class="n">difference</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="err">σ</span><span class="mi">2</span><span class="n">_rec</span><span class="p">,</span><span class="n">mask_noncloud</span><span class="p">)))</span> <span class="o">/</span> <span class="n">n_noncloud</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">cost</span> <span class="o">=</span> <span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="err">σ</span><span class="mi">2</span><span class="n">_rec</span><span class="p">),</span><span class="n">mask_noncloud</span><span class="p">))</span> <span class="o">+</span>
+            <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">difference</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="err">σ</span><span class="mi">2</span><span class="n">_rec</span><span class="p">,</span><span class="n">mask_noncloud</span><span class="p">)))</span> <span class="o">/</span> <span class="n">n_noncloud</span>
+
+
+    <span class="c1"># L2 regularization of weights</span>
+    <span class="k">if</span> <span class="n">regularization_L2_beta</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">trainable_variables</span>   <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">trainable_variables</span><span class="p">()</span>
+        <span class="n">lossL2</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">add_n</span><span class="p">([</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">l2_loss</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">trainable_variables</span>
+                            <span class="k">if</span> <span class="s1">&#39;bias&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">name</span> <span class="p">])</span> <span class="o">*</span> <span class="n">regularization_L2_beta</span>
+        <span class="n">cost</span> <span class="o">=</span> <span class="n">cost</span> <span class="o">+</span> <span class="n">lossL2</span>
+
+    <span class="n">RMS</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">difference</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span><span class="n">mask_noncloud</span><span class="p">))</span>
+                  <span class="o">/</span> <span class="n">n_noncloud</span><span class="p">)</span>
+
+    <span class="c1"># to debug</span>
+    <span class="c1"># cost = RMS</span>
+
+    <span class="k">if</span> <span class="n">tensorboard</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="s1">&#39;Validation&#39;</span><span class="p">):</span>
+            <span class="n">tf</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="s1">&#39;RMS&#39;</span><span class="p">,</span> <span class="n">RMS</span><span class="p">)</span>
+            <span class="n">tf</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="s1">&#39;cost&#39;</span><span class="p">,</span> <span class="n">cost</span><span class="p">)</span>
+            <span class="n">tf</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="s2">&quot;m_rec&quot;</span><span class="p">,</span><span class="n">tf</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span>
+                <span class="n">tf</span><span class="o">.</span><span class="n">reverse</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">m_rec</span><span class="p">,</span><span class="n">mask_issea</span><span class="p">),[</span><span class="mi">1</span><span class="p">]),</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+            <span class="n">tf</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="s2">&quot;m_true&quot;</span><span class="p">,</span><span class="n">tf</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span>
+                <span class="n">tf</span><span class="o">.</span><span class="n">reverse</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">m_true</span><span class="p">,</span><span class="n">mask_issea</span><span class="p">),[</span><span class="mi">1</span><span class="p">]),</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+            <span class="n">tf</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="s2">&quot;sigma2_rec&quot;</span><span class="p">,</span><span class="n">tf</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span>
+                <span class="n">tf</span><span class="o">.</span><span class="n">reverse</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="err">σ</span><span class="mi">2</span><span class="n">_rec</span><span class="p">,</span><span class="n">mask_issea</span><span class="p">),[</span><span class="mi">1</span><span class="p">]),</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+
+    <span class="c1"># parameters for Adam optimizer (default values)</span>
+    <span class="n">learning_rate</span> <span class="o">=</span> <span class="mf">1e-3</span>
+    <span class="n">beta1</span> <span class="o">=</span> <span class="mf">0.9</span>
+    <span class="n">beta2</span> <span class="o">=</span> <span class="mf">0.999</span>
+    <span class="n">epsilon</span> <span class="o">=</span> <span class="mf">1e-08</span>
+
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">AdamOptimizer</span><span class="p">(</span><span class="n">learning_rate</span><span class="p">,</span><span class="n">beta1</span><span class="p">,</span><span class="n">beta2</span><span class="p">,</span><span class="n">epsilon</span><span class="p">)</span>
+    <span class="n">gradients</span><span class="p">,</span> <span class="n">variables</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">optimizer</span><span class="o">.</span><span class="n">compute_gradients</span><span class="p">(</span><span class="n">cost</span><span class="p">))</span>
+    <span class="n">gradients</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">clip_by_global_norm</span><span class="p">(</span><span class="n">gradients</span><span class="p">,</span> <span class="n">clip_grad</span><span class="p">)</span>
+    <span class="n">opt</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">apply_gradients</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">gradients</span><span class="p">,</span> <span class="n">variables</span><span class="p">))</span>
+
+    <span class="n">dt_start</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">dt_start</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">tensorboard</span><span class="p">:</span>
+        <span class="n">merged</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">merge_all</span><span class="p">()</span>
+        <span class="n">train_writer</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">FileWriter</span><span class="p">(</span><span class="n">outdir</span> <span class="o">+</span> <span class="s1">&#39;/train&#39;</span><span class="p">,</span>
+                                          <span class="n">sess</span><span class="o">.</span><span class="n">graph</span><span class="p">)</span>
+        <span class="n">test_writer</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">FileWriter</span><span class="p">(</span><span class="n">outdir</span> <span class="o">+</span> <span class="s1">&#39;/test&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># unused</span>
+        <span class="n">merged</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span>
+
+    <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">global_variables_initializer</span><span class="p">())</span>
+
+    <span class="n">saver</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">Saver</span><span class="p">()</span>
+
+    <span class="c1"># loop over epochs</span>
+    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+
+        <span class="c1"># loop over training datasets</span>
+        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ceil</span><span class="p">(</span><span class="n">train_len</span> <span class="o">/</span> <span class="n">batch_size</span><span class="p">)):</span>
+
+            <span class="c1"># run a single step of the optimizer</span>
+            <span class="n">summary</span><span class="p">,</span> <span class="n">batch_cost</span><span class="p">,</span> <span class="n">batch_RMS</span><span class="p">,</span> <span class="n">bs</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">merged</span><span class="p">,</span> <span class="n">cost</span><span class="p">,</span> <span class="n">RMS</span><span class="p">,</span> <span class="n">mask_noncloud</span><span class="p">,</span> <span class="n">opt</span><span class="p">],</span><span class="n">feed_dict</span><span class="o">=</span><span class="p">{</span>
+                    <span class="n">handle</span><span class="p">:</span> <span class="n">train_iterator_handle</span><span class="p">,</span>
+                    <span class="n">mask_issea</span><span class="p">:</span> <span class="n">mask</span><span class="p">,</span>
+                    <span class="n">dropout_rate</span><span class="p">:</span> <span class="n">dropout_rate_train</span><span class="p">})</span>
+
+            <span class="k">if</span> <span class="n">tensorboard</span><span class="p">:</span>
+                <span class="n">train_writer</span><span class="o">.</span><span class="n">add_summary</span><span class="p">(</span><span class="n">summary</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
+
+            <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="k">if</span> <span class="n">ii</span> <span class="o">%</span> <span class="mi">20</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Epoch: {}/{}...&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">epochs</span><span class="p">),</span>
+                      <span class="s2">&quot;Training loss: {:.4f}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">batch_cost</span><span class="p">),</span>
+                      <span class="s2">&quot;RMS: {:.4f}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">batch_RMS</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">e</span> <span class="o">%</span> <span class="n">save_each</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Save output&quot;</span><span class="p">,</span><span class="n">e</span><span class="p">)</span>
+
+            <span class="n">timestr</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H%M%S&quot;</span><span class="p">)</span>
+            <span class="n">fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">outdir</span><span class="p">,</span><span class="s2">&quot;data-{}.nc&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">timestr</span><span class="p">))</span>
+
+            <span class="c1"># reset test iterator, so that we start from the beginning</span>
+            <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">test_iterator_init_op</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ceil</span><span class="p">(</span><span class="n">test_len</span> <span class="o">/</span> <span class="n">batch_size</span><span class="p">)):</span>
+                <span class="n">summary</span><span class="p">,</span> <span class="n">batch_cost</span><span class="p">,</span><span class="n">batch_RMS</span><span class="p">,</span><span class="n">batch_m_rec</span><span class="p">,</span><span class="n">batch_σ2_rec</span> <span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">merged</span><span class="p">,</span> <span class="n">cost</span><span class="p">,</span><span class="n">RMS</span><span class="p">,</span><span class="n">m_rec</span><span class="p">,</span><span class="err">σ</span><span class="mi">2</span><span class="n">_rec</span><span class="p">],</span>
+                    <span class="n">feed_dict</span> <span class="o">=</span> <span class="p">{</span> <span class="n">handle</span><span class="p">:</span> <span class="n">test_iterator_handle</span><span class="p">,</span>
+                                  <span class="n">mask_issea</span><span class="p">:</span> <span class="n">mask</span> <span class="p">})</span>
+
+                <span class="c1"># time instances already written</span>
+                <span class="n">offset</span> <span class="o">=</span> <span class="n">ii</span><span class="o">*</span><span class="n">batch_size</span>
+                <span class="n">savesample</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span><span class="n">batch_m_rec</span><span class="p">,</span><span class="n">batch_σ2_rec</span><span class="p">,</span><span class="n">meandata</span><span class="p">,</span><span class="n">lon</span><span class="p">,</span><span class="n">lat</span><span class="p">,</span><span class="n">e</span><span class="p">,</span><span class="n">ii</span><span class="p">,</span>
+                           <span class="n">offset</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">e</span> <span class="o">%</span> <span class="n">save_model_each</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">save_path</span> <span class="o">=</span> <span class="n">saver</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">sess</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">outdir</span><span class="p">,</span><span class="s2">&quot;model-{:03d}.ckpt&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="o">+</span><span class="mi">1</span><span class="p">)))</span>
+
+    <span class="n">dt_end</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">dt_end</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">dt_end</span> <span class="o">-</span> <span class="n">dt_start</span><span class="p">)</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="DINCAE.reconstruct_gridded_nc">
+    <p>def <span class="ident">reconstruct_gridded_nc</span>(</p><p>filename, varname, outdir, jitter_std=0.05, **kwargs)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Train a neural network to reconstruct missing data from the NetCDF variable
+<code>varname</code> in the NetCDF file <code>filename</code>. Results are saved in the output
+directory <code>outdir</code>. <code>jitter_std</code> is the standard deviation of the noise to be
+added to the data during training.
+See <a href="#DINCAE.reconstruct"><code>reconstruct</code></a> for other keyword arguments and
+<a href="#DINCAE.load_gridded_nc"><code>load_gridded_nc</code></a> for the NetCDF format.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-DINCAE.reconstruct_gridded_nc', this);">Show source &equiv;</a></p>
+  <div id="source-DINCAE.reconstruct_gridded_nc" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">reconstruct_gridded_nc</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span><span class="n">varname</span><span class="p">,</span><span class="n">outdir</span><span class="p">,</span>
+                           <span class="n">jitter_std</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
+                           <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Train a neural network to reconstruct missing data from the NetCDF variable</span>
+<span class="sd">`varname` in the NetCDF file `filename`. Results are saved in the output</span>
+<span class="sd">directory `outdir`. `jitter_std` is the standard deviation of the noise to be</span>
+<span class="sd">added to the data during training.</span>
+<span class="sd">See `DINCAE.reconstruct` for other keyword arguments and</span>
+<span class="sd">`DINCAE.load_gridded_nc` for the NetCDF format.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+    <span class="n">lon</span><span class="p">,</span><span class="n">lat</span><span class="p">,</span><span class="n">time</span><span class="p">,</span><span class="n">data</span><span class="p">,</span><span class="n">missing</span><span class="p">,</span><span class="n">mask</span> <span class="o">=</span> <span class="n">load_gridded_nc</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span><span class="n">varname</span><span class="p">)</span>
+    <span class="n">train_datagen</span><span class="p">,</span><span class="n">train_len</span><span class="p">,</span><span class="n">meandata</span> <span class="o">=</span> <span class="n">data_generator</span><span class="p">(</span>
+        <span class="n">lon</span><span class="p">,</span><span class="n">lat</span><span class="p">,</span><span class="n">time</span><span class="p">,</span><span class="n">data</span><span class="p">,</span><span class="n">missing</span><span class="p">,</span>
+        <span class="n">jitter_std</span> <span class="o">=</span> <span class="n">jitter_std</span><span class="p">)</span>
+    <span class="n">test_datagen</span><span class="p">,</span><span class="n">test_len</span><span class="p">,</span><span class="n">test_meandata</span> <span class="o">=</span> <span class="n">data_generator</span><span class="p">(</span>
+        <span class="n">lon</span><span class="p">,</span><span class="n">lat</span><span class="p">,</span><span class="n">time</span><span class="p">,</span><span class="n">data</span><span class="p">,</span><span class="n">missing</span><span class="p">,</span>
+        <span class="n">train</span> <span class="o">=</span> <span class="bp">False</span><span class="p">)</span>
+
+    <span class="n">reconstruct</span><span class="p">(</span>
+        <span class="n">lon</span><span class="p">,</span><span class="n">lat</span><span class="p">,</span><span class="n">mask</span><span class="p">,</span><span class="n">meandata</span><span class="p">,</span>
+        <span class="n">train_datagen</span><span class="p">,</span><span class="n">train_len</span><span class="p">,</span>
+        <span class="n">test_datagen</span><span class="p">,</span><span class="n">test_len</span><span class="p">,</span>
+        <span class="n">outdir</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+
+
+  </section>
+
+    </article>
+  <div class="clear"> </div>
+  <footer id="footer">
+    <p>
+      Documentation generated by
+      <a href="https://github.com/BurntSushi/pdoc">pdoc 0.3.2</a>
+    </p>
+
+    <p>pdoc is in the public domain with the
+      <a href="http://unlicense.org">UNLICENSE</a></p>
+
+    <p>Design by <a href="http://nadh.in">Kailash Nadh</a></p>
+  </footer>
+</div>
+</body>
+</html>
