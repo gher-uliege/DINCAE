@@ -25,6 +25,9 @@ reconstruct missing data in satellite observations.
 
 For most application it is sufficient to call the function
 `DINCAE.reconstruct_gridded_nc` directly.
+
+The code is available at:
+[https://github.com/gher-ulg/DINCAE](https://github.com/gher-ulg/DINCAE)
 """
 import os
 import random
