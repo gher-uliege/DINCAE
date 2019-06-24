@@ -59,7 +59,7 @@ def load_gridded_nc(fname,varname):
     """
 Load the variable `varname` from the NetCDF file `fname`. The variable `lon` is
 the longitude in degrees east, `lat` is the latitude in degrees North, `time` is
-a numpy datetime vector, `data_full` is a 3-d array with the data, `missing`
+a numpy datetime vector, `data_full` is a 3-d array with the data, `missingmask`
 is a boolean mask where true means the data is missing and `mask` is a boolean mask
 where true means the data location is valid, e.g. sea points for sea surface temperature.
 
@@ -92,12 +92,12 @@ attributes:
     mask = ds.variables["mask"][:,:].data == 1;
 
     ds.close()
-    missing = data.mask
+    missingmask = data.mask
 
-    return lon,lat,time,data,missing,mask
+    return lon,lat,time,data,missingmask,mask
 
 
-def data_generator(lon,lat,time,data_full,missing,
+def data_generator(lon,lat,time,data_full,missingmask,
                    train = True,
                    obs_err_std = 1.,
                    jitter_std = 0.05):
@@ -106,7 +106,7 @@ Return a generator for training (`train = True`) or testing (`train = False`)
 the neural network. `obs_err_std` is the error standard deviation of the
 observations. The variable `lon` is the longitude in degrees east, `lat` is the
 latitude in degrees North, `time` is a numpy datetime vector, `data_full` is a
-3-d array with the data and `missing` is a boolean mask where true means the data is
+3-d array with the data and `missingmask` is a boolean mask where true means the data is
 missing. `jitter_std` is the standard deviation of the noise to be added to the
 data during training.
 
@@ -153,8 +153,8 @@ the temporal mean of the data.
 
             # add missing data during training randomly
             if train:
-                imask = random.randrange(0,missing.shape[0])
-                selmask = missing[imask,:,:]
+                imask = random.randrange(0,missingmask.shape[0])
+                selmask = missingmask[imask,:,:]
 
                 xin[:,:,0][selmask] = 0
                 xin[:,:,1][selmask] = 0
@@ -557,12 +557,12 @@ See `DINCAE.reconstruct` for other keyword arguments and
 `DINCAE.load_gridded_nc` for the NetCDF format.
 
 """
-    lon,lat,time,data,missing,mask = load_gridded_nc(filename,varname)
+    lon,lat,time,data,missingmask,mask = load_gridded_nc(filename,varname)
     train_datagen,train_len,meandata = data_generator(
-        lon,lat,time,data,missing,
+        lon,lat,time,data,missingmask,
         jitter_std = jitter_std)
     test_datagen,test_len,test_meandata = data_generator(
-        lon,lat,time,data,missing,
+        lon,lat,time,data,missingmask,
         train = False)
 
     reconstruct(
