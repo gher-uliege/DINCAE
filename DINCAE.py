@@ -340,7 +340,7 @@ e.g. sea points for sea surface temperature.
 
         print("encoder: output size of pooling layer: ",l,enc_avgpool[l].shape)
 
-        enc_last = enc_avgpool[-1]
+    enc_last = enc_avgpool[-1]
 
     # Dense Layer
     ndensein = enc_last.shape[1:].num_elements()

@@ -56,6 +56,7 @@ end
 
 function Random.shuffle!(rv::RVec)
     randperm!(rv.perm)
+    return rv
 end
 
 
@@ -97,7 +98,7 @@ function load_gridded_nc(fname,varname)
     time = nomissing(ds["time"][1:10])
     data = nomissing(ds[varname][:,:,1:10],NaN)
 
-    mask = nomissing(ds["mask"][:,:]) == 1;
+    mask = nomissing(ds["mask"][:,:]) .== 1;
 
     close(ds)
     missingmask = isnan.(data)
@@ -384,8 +385,8 @@ function reconstruct(lon,lat,mask,meandata,
                 save_model_each = 500,
                 skipconnections = [1,2,3,4],
                 dropout_rate_train = 0.3,
-                tensorboard = False,
-                truth_uncertain = False,
+                tensorboard = false,
+                truth_uncertain = false,
                 shuffle_buffer_size = 3*15,
                 nvar = 10,
                 enc_ksize_internal = [16,24,36,54],
@@ -400,7 +401,7 @@ function reconstruct(lon,lat,mask,meandata,
         mkpath(outdir)
     end
 
-    jmax,imax = mask.shape
+    jmax,imax = size(mask)
 
     sess = TensorFlow.session()
 
