@@ -169,9 +169,9 @@ the temporal mean of the data.
     return datagen,data.shape[0],meandata
 
 
-def savesample(fname,batch_m_rec,batch_σ2_rec,meandata,lon,lat,e,ii,offset):
+def savesample_old(fname,batch_m_rec,batch_σ2_rec,meandata,lon,lat,e,ii,offset):
     fill_value = -9999.
-    recdata = batch_m_rec # + meandata;
+    recdata = batch_m_rec  # + meandata;
     batch_sigma_rec = np.sqrt(batch_σ2_rec)
 
     if ii == 0:
@@ -190,12 +190,12 @@ def savesample(fname,batch_m_rec,batch_σ2_rec,meandata,lon,lat,e,ii,offset):
             'meandata', 'f4', ('lat','lon'),
             fill_value=fill_value)
 
-        nc_batch_m_rec = root_grp.createVariable(
-            'batch_m_rec', 'f4', ('time', 'lat', 'lon'),
+        nc_m_rec = root_grp.createVariable(
+            'm_rec', 'f4', ('time', 'lat', 'lon'),
             fill_value=fill_value)
 
-        nc_batch_sigma_rec = root_grp.createVariable(
-            'batch_sigma_rec', 'f4', ('time', 'lat', 'lon',),
+        nc_sigma_rec = root_grp.createVariable(
+            'sigma_rec', 'f4', ('time', 'lat', 'lon',),
             fill_value=fill_value)
 
         # data
@@ -205,14 +205,63 @@ def savesample(fname,batch_m_rec,batch_σ2_rec,meandata,lon,lat,e,ii,offset):
     else:
         # append to file
         root_grp = Dataset(fname, 'a')
-        nc_batch_m_rec = root_grp.variables['batch_m_rec']
-        nc_batch_sigma_rec = root_grp.variables['batch_sigma_rec']
+        nc_m_rec = root_grp.variables['m_rec']
+        nc_sigma_rec = root_grp.variables['sigma_rec']
 
-    for n in range(batch_m_rec.shape[0]):
-        nc_batch_m_rec[n+offset,:,:] = np.ma.masked_array(
+    for n in range(m_rec.shape[0]):
+        nc_m_rec[n+offset,:,:] = np.ma.masked_array(
             batch_m_rec[n,:,:],meandata.mask)
         nc_batch_sigma_rec[n+offset,:,:] = np.ma.masked_array(
             batch_sigma_rec[n,:,:],meandata.mask)
+
+
+    root_grp.close()
+
+
+def savesample(fname,m_rec,σ2_rec,meandata,lon,lat,e,ii,offset):
+    fill_value = -9999.
+    recdata = m_rec  + meandata;
+    sigma_rec = np.sqrt(σ2_rec)
+
+    if ii == 0:
+        # create file
+        root_grp = Dataset(fname, 'w', format='NETCDF4')
+
+        # dimensions
+        root_grp.createDimension('time', None)
+        root_grp.createDimension('lon', len(lon))
+        root_grp.createDimension('lat', len(lat))
+
+        # variables
+        nc_lon = root_grp.createVariable('lon', 'f4', ('lon',))
+        nc_lat = root_grp.createVariable('lat', 'f4', ('lat',))
+        nc_meandata = root_grp.createVariable(
+            'meandata', 'f4', ('lat','lon'),
+            fill_value=fill_value)
+
+        nc_mean_rec = root_grp.createVariable(
+            'mean_rec', 'f4', ('time', 'lat', 'lon'),
+            fill_value=fill_value)
+
+        nc_sigma_rec = root_grp.createVariable(
+            'sigma_rec', 'f4', ('time', 'lat', 'lon',),
+            fill_value=fill_value)
+
+        # data
+        nc_lon[:] = lon
+        nc_lat[:] = lat
+        nc_meandata[:,:] = meandata
+    else:
+        # append to file
+        root_grp = Dataset(fname, 'a')
+        nc_mean_rec = root_grp.variables['mean_rec']
+        nc_sigma_rec = root_grp.variables['sigma_rec']
+
+    for n in range(m_rec.shape[0]):
+        nc_mean_rec[n+offset,:,:] = np.ma.masked_array(
+            recdata[n,:,:],meandata.mask)
+        nc_sigma_rec[n+offset,:,:] = np.ma.masked_array(
+            sigma_rec[n,:,:],meandata.mask)
 
 
     root_grp.close()
