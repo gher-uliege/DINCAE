@@ -31,7 +31,7 @@ The input data should be in netCDF with the variables:
 * `lat`: latitude (degrees North)
 * `time`: time (days since 1900-01-01 00:00:00)
 * `mask`: boolean mask where true means the data location is valid
-* `SST` (or any other varbiable name): data
+* `SST` (or any other varbiable name): the data
 
 
 ```
