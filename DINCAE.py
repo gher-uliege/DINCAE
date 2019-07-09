@@ -293,7 +293,8 @@ def reconstruct(lon,lat,mask,meandata,
 ):
     """
 Train a neural network to reconstruct missing data using the training data set
-and periodically run the neural network on the test dataset.
+and periodically run the neural network on the test dataset. The function returns the
+filename of the latest reconstruction.
 
 ## Parameters
 
@@ -541,6 +542,9 @@ e.g. sea points for sea surface temperature.
 
     saver = tf.train.Saver()
 
+    # final output file name
+    fname = None
+
     # loop over epochs
     for e in range(epochs):
 
@@ -592,7 +596,7 @@ e.g. sea points for sea surface temperature.
     print(dt_end)
     print(dt_end - dt_start)
 
-
+    return fname
 
 def reconstruct_gridded_nc(filename,varname,outdir,
                            jitter_std = 0.05,
