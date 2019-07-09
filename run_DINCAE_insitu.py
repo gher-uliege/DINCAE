@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-
-# to do:
-# real coastline
-# smaller network
-
 import os
 import random
 import math
@@ -16,8 +11,8 @@ import numpy as np
 import tensorflow as tf
 from datetime import datetime
 import DINCAE
-
-#xtf.executing_eagerly()
+import scipy
+import skopt
 
 reconstruct_params = {
     #"epochs": 1,
@@ -36,11 +31,13 @@ reconstruct_params = {
     "regularization_L2_beta": 0.05,
 }
 
-fname = os.path.expanduser("~/Data/DINCAE_insitu/Temperature/Temperature.train.nc")
+
+# basedir should contain all the input data
+basedir = os.path.expanduser("~/Data/DINCAE_insitu/")
+
+fname = os.path.join(basedir,"Temperature.train.nc")
 varname = "Salinity"
 varname = "Temperature"
-
-basedir = os.path.expanduser("~/Data/DINCAE_insitu/")
 
 outdir = os.path.join(basedir,"Test1")
 outdir = os.path.join(basedir,"Test-jitter-lonlat-0.1")
@@ -51,15 +48,11 @@ outdir = os.path.join(basedir,"Test-jitter-lonlat-0.1-only-input-gap-jitter-smal
 outdir = os.path.join(basedir,"Test-jitter-lonlat-0.1-only-input-gap-jitter-smaller-l2-0.01-test")
 outdir = os.path.join(basedir,"Test-jitter-lonlat-0.1-only-input-gap-jitter-smaller-l2-1")
 outdir = os.path.join(basedir,"Test-jitter-lonlat-0.1-only-input-gap-jitter-smaller-l2-0.05")
+outdir = os.path.join(basedir,"Test-jitter-lonlat-0.1-only-input-gap-jitter-smaller-l2-0.7")
 
-#fname = "/home/abarth/src/DIVAnd-REST/data/WOD-Salinity.nc"
 
-#Deltax = Deltay = 0.125
-#Deltax = Deltay = 0.5
-#lon = np.arange(-5.5, 37.0 + Deltax,Deltax)
-#lat = np.arange(29.0, 45.8 + Deltay,Deltay)
+maskname = os.path.join(basedir,"mask.nc")
 
-maskname = os.path.expanduser("~/tmp/Data/DINCAE_insitu/mask.nc")
 ds = Dataset(maskname, 'r')
 lon = ds.variables["lon"][:].data;
 lat = ds.variables["lat"][:].data;
@@ -75,7 +68,7 @@ if not os.path.isdir(basedir):
 if not os.path.isdir(outdir):
     os.mkdir(outdir)
 
-def loadobs(fname,month = 1):
+def loadobs(fname,varname):
 
     ds = Dataset(fname)
     obslon = ds.variables["obslon"][:];
@@ -149,27 +142,36 @@ def binanalysis(obslon,obslat,obsvalue,obsinvsigma2,lon,lat, dtype = np.float32,
 
     return mmean, np.array(msum, dtype=dtype), np.array(minvsigma2, dtype=dtype)
 
-obsvalue,obslon,obslat,obsdepth,obstime = loadobs(fname)
 
-obsmonths = obstime.astype('datetime64[M]').astype(int) % 12 + 1
+# month = 1
 
-month = 1
+# sel = obsmonths == month
 
-sel = obsmonths == month
-
-mobsvalue,mobslon,mobslat,mobsdepth,mobstime = (
-    obsvalue[sel],obslon[sel],obslat[sel],obsdepth[sel],obstime[sel])
+# mobsvalue,mobslon,mobslat,mobsdepth,mobstime = (
+#     obsvalue[sel],obslon[sel],obslat[sel],obsdepth[sel],obstime[sel])
 
 
+# obsvalue,obslon,obslat,obsdepth,obstime = loadobs(fname,varname)
 
-#plt.plot(obslon[sel],obslat[sel],".")
-#plt.show()
+# obsmonths = obstime.astype('datetime64[M]').astype(int) % 12 + 1
 
-mmean = binaverage(mobslon,mobslat,mobsvalue,lon,lat)
+# month = 1
 
-mobsinvsigma2 = np.ones(mobsvalue.shape)
+# sel = obsmonths == month
 
-mmean,msum,minvsigma2 = binanalysis(mobslon,mobslat,mobsvalue,mobsinvsigma2,lon,lat)
+# mobsvalue,mobslon,mobslat,mobsdepth,mobstime = (
+#     obsvalue[sel],obslon[sel],obslat[sel],obsdepth[sel],obstime[sel])
+
+
+
+# #plt.plot(obslon[sel],obslat[sel],".")
+# #plt.show()
+
+# mmean = binaverage(mobslon,mobslat,mobsvalue,lon,lat)
+
+# mobsinvsigma2 = np.ones(mobsvalue.shape)
+
+# mmean,msum,minvsigma2 = binanalysis(mobslon,mobslat,mobsvalue,mobsinvsigma2,lon,lat)
 
 
 #plt.pcolor(minvsigma2); plt.colorbar(); plt.show()
@@ -321,33 +323,74 @@ test_datagen,test_len,meandata_test = loadobsdata(train = False)
 
 mask = meandata.mask
 
-xin,x = next(train_datagen())
+# xin,x = next(train_datagen())
 
-print("xin.shape",xin.shape)
-print("x.shape",x.shape)
+# print("xin.shape",xin.shape)
+# print("x.shape",x.shape)
 
-nvar = reconstruct_params["nvar"]
-for i in range(0,nvar):
-    print("range xin",i,xin[:,:,i].min(),xin[:,:,i].max())
-
-
-print(xin[2,1,:])
-print(xin[2,2,:])
-
-it = train_datagen()
-xin,x = next(it)
-#xin,x = next(it)
-#xin,x = next(it)
-
-#plt.figure(); plt.pcolor(mmean, cmap="jet"); plt.colorbar(); plt.show()
-#plt.figure(); plt.pcolor(xin[:,:,1], cmap="jet"); plt.colorbar(); plt.show()
+# nvar = reconstruct_params["nvar"]
+# for i in range(0,nvar):
+#     print("range xin",i,xin[:,:,i].min(),xin[:,:,i].max())
 
 
-#xin,x = next(test_datagen())
+# print(xin[2,1,:])
+# print(xin[2,2,:])
+
+# it = train_datagen()
+# xin,x = next(it)
+# #xin,x = next(it)
+# #xin,x = next(it)
+
+# #plt.figure(); plt.pcolor(mmean, cmap="jet"); plt.colorbar(); plt.show()
+# #plt.figure(); plt.pcolor(xin[:,:,1], cmap="jet"); plt.colorbar(); plt.show()
 
 
-DINCAE.reconstruct(lon,lat,mask,meandata,
-                   train_datagen,train_len,
-                   test_datagen,test_len,
-                   outdir,
-                   **reconstruct_params)
+# #xin,x = next(test_datagen())
+
+
+
+# DINCAE.reconstruct(lon,lat,mask,meandata,
+#                    train_datagen,train_len,
+#                    test_datagen,test_len,
+#                    outdir,
+#                    **reconstruct_params)
+
+
+
+
+def monthlyCVRMS(lon,lat,depth,value,obsvalue,obslon,obslat,obsdepth,obstime):
+    obsmonths = obstime.astype('datetime64[M]').astype(int) % 12
+
+
+    RMS = np.zeros((12))
+
+    for month in range(0,12):
+        sel = obsmonths == month
+
+        mobsvalue,mobslon,mobslat,mobsdepth,mobstime = (
+            obsvalue[sel],obslon[sel],obslat[sel],obsdepth[sel],obstime[sel])
+
+        mclim = scipy.interpolate.interpn((lat,lon),value[month,:,:],  np.vstack( (mobslat,mobslon) ).T )
+        sel = np.isfinite(mclim);
+        RMS[month] = np.sqrt(np.mean((mclim[sel] - mobsvalue[sel])**2))
+
+    totRMS = np.sqrt(np.mean(RMS**2))
+    return RMS,totRMS
+
+
+def monthlyCVRMS_files(fname,fnamecv,varname):
+    ds = Dataset(fname);
+    lon = ds.variables["lon"][:]
+    lat = ds.variables["lat"][:]
+    depth = [] # unused
+    v = ds.variables["mean_rec"][:].filled(np.NaN)
+
+    obsvalue,obslon,obslat,obsdepth,obstime = loadobs(fnamecv,varname)
+
+    return monthlyCVRMS(lon,lat,depth,v,obsvalue,obslon,obslat,obsdepth,obstime)
+
+fname = "/mnt/data1/abarth/work/Data/DINCAE_insitu/Test-jitter-lonlat-0.1-only-input-gap-jitter-smaller-l2-0.7/data-2019-07-08T143513.nc";
+fnamecv = os.path.join(basedir,"Temperature.cv.nc")
+varname = "Temperature"
+
+RMS,totRMS = monthlyCVRMS_files(fname,fnamecv,varname)
