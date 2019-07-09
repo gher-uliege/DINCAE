@@ -543,6 +543,9 @@ e.g. sea points for sea surface temperature.
             save_path = saver.save(sess, os.path.join(
                 outdir,"model-{:03d}.ckpt".format(e+1)))
 
+    # free all resources associated with the session
+    sess.close()
+
     dt_end = datetime.now()
     print(dt_end)
     print(dt_end - dt_start)
