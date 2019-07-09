@@ -16,7 +16,8 @@ import skopt
 
 reconstruct_params = {
     #"epochs": 1,
-    "epochs": 1_000 * 5 * 2,
+    "epochs": 200,
+    #"epochs": 1_000 * 5 * 2,
     "batch_size": 12,
     "save_each": 10,
     "skipconnections": [],
@@ -151,9 +152,8 @@ def binanalysis(obslon,obslat,obsvalue,obsinvsigma2,lon,lat, dtype = np.float32,
 #     obsvalue[sel],obslon[sel],obslat[sel],obsdepth[sel],obstime[sel])
 
 
-# obsvalue,obslon,obslat,obsdepth,obstime = loadobs(fname,varname)
-
-# obsmonths = obstime.astype('datetime64[M]').astype(int) % 12 + 1
+obsvalue,obslon,obslat,obsdepth,obstime = loadobs(fname,varname)
+obsmonths = obstime.astype('datetime64[M]').astype(int) % 12 + 1
 
 # month = 1
 
@@ -302,6 +302,37 @@ def savesample(fname,batch_m_rec,batch_σ2_rec,meandata,lon,lat,e,ii,offset):
     root_grp.close()
 
 
+def monthlyCVRMS(lon,lat,depth,value,obsvalue,obslon,obslat,obsdepth,obstime):
+    obsmonths = obstime.astype('datetime64[M]').astype(int) % 12
+
+
+    RMS = np.zeros((12))
+
+    for month in range(0,12):
+        sel = obsmonths == month
+
+        mobsvalue,mobslon,mobslat,mobsdepth,mobstime = (
+            obsvalue[sel],obslon[sel],obslat[sel],obsdepth[sel],obstime[sel])
+
+        mclim = scipy.interpolate.interpn((lat,lon),value[month,:,:],  np.vstack( (mobslat,mobslon) ).T )
+        sel = np.isfinite(mclim);
+        RMS[month] = np.sqrt(np.mean((mclim[sel] - mobsvalue[sel])**2))
+
+    totRMS = np.sqrt(np.mean(RMS**2))
+    return RMS,totRMS
+
+
+def monthlyCVRMS_files(fname,fnamecv,varname):
+    ds = Dataset(fname);
+    lon = ds.variables["lon"][:]
+    lat = ds.variables["lat"][:]
+    depth = [] # unused
+    v = ds.variables["mean_rec"][:].filled(np.NaN)
+
+    obsvalue,obslon,obslat,obsdepth,obstime = loadobs(fnamecv,varname)
+
+    return monthlyCVRMS(lon,lat,depth,v,obsvalue,obslon,obslat,obsdepth,obstime)
+
 jitter_std_lon = 2*(lon[1]-lon[0])
 jitter_std_lat = 2*(lat[1]-lat[0])
 jitter_std_lon = 0*(lon[1]-lon[0])
@@ -349,47 +380,13 @@ mask = meandata.mask
 
 
 
-# DINCAE.reconstruct(lon,lat,mask,meandata,
-#                    train_datagen,train_len,
-#                    test_datagen,test_len,
-#                    outdir,
-#                    **reconstruct_params)
+fname = DINCAE.reconstruct(lon,lat,mask,meandata,
+                    train_datagen,train_len,
+                    test_datagen,test_len,
+                    outdir,
+                    **reconstruct_params)
 
-
-
-
-def monthlyCVRMS(lon,lat,depth,value,obsvalue,obslon,obslat,obsdepth,obstime):
-    obsmonths = obstime.astype('datetime64[M]').astype(int) % 12
-
-
-    RMS = np.zeros((12))
-
-    for month in range(0,12):
-        sel = obsmonths == month
-
-        mobsvalue,mobslon,mobslat,mobsdepth,mobstime = (
-            obsvalue[sel],obslon[sel],obslat[sel],obsdepth[sel],obstime[sel])
-
-        mclim = scipy.interpolate.interpn((lat,lon),value[month,:,:],  np.vstack( (mobslat,mobslon) ).T )
-        sel = np.isfinite(mclim);
-        RMS[month] = np.sqrt(np.mean((mclim[sel] - mobsvalue[sel])**2))
-
-    totRMS = np.sqrt(np.mean(RMS**2))
-    return RMS,totRMS
-
-
-def monthlyCVRMS_files(fname,fnamecv,varname):
-    ds = Dataset(fname);
-    lon = ds.variables["lon"][:]
-    lat = ds.variables["lat"][:]
-    depth = [] # unused
-    v = ds.variables["mean_rec"][:].filled(np.NaN)
-
-    obsvalue,obslon,obslat,obsdepth,obstime = loadobs(fnamecv,varname)
-
-    return monthlyCVRMS(lon,lat,depth,v,obsvalue,obslon,obslat,obsdepth,obstime)
-
-fname = "/mnt/data1/abarth/work/Data/DINCAE_insitu/Test-jitter-lonlat-0.1-only-input-gap-jitter-smaller-l2-0.7/data-2019-07-08T143513.nc";
+#fname = "/mnt/data1/abarth/work/Data/DINCAE_insitu/Test-jitter-lonlat-0.1-only-input-gap-jitter-smaller-l2-0.7/data-2019-07-08T143513.nc";
 fnamecv = os.path.join(basedir,"Temperature.cv.nc")
 varname = "Temperature"
 
