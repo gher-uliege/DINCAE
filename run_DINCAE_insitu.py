@@ -13,15 +13,27 @@ from datetime import datetime
 import DINCAE
 import scipy
 import skopt
+from skopt.space import Real, Integer
+from skopt.utils import use_named_args
+import json
+import shutil
+
+from multiprocessing import Pool
+
+epochs = 5000*2
+epochs = 1000
+#epochs = 5
 
 reconstruct_params = {
     #"epochs": 1,
-    "epochs": 200,
     #"epochs": 1_000 * 5 * 2,
+    "epochs": epochs,
+    #"epochs": 5,
     "batch_size": 12,
-    "save_each": 10,
     "skipconnections": [],
-    "save_each": 100 * 2,
+    #"save_each": 100 * 2,
+    #"save_each": 5,
+    "save_each": 0,
     "dropout_rate_train": 0.3,
     "shuffle_buffer_size": 12,
     # number of input variables
@@ -30,13 +42,14 @@ reconstruct_params = {
     "enc_ksize_internal": [16,24,36,54],
     #"regularization_L2_beta": 0.,
     "regularization_L2_beta": 0.05,
+    "save_model_each": 0,
 }
 
 
 # basedir should contain all the input data
 basedir = os.path.expanduser("~/Data/DINCAE_insitu/")
 
-fname = os.path.join(basedir,"Temperature.train.nc")
+fnametrain = os.path.join(basedir,"Temperature.train.nc")
 varname = "Salinity"
 varname = "Temperature"
 
@@ -50,6 +63,7 @@ outdir = os.path.join(basedir,"Test-jitter-lonlat-0.1-only-input-gap-jitter-smal
 outdir = os.path.join(basedir,"Test-jitter-lonlat-0.1-only-input-gap-jitter-smaller-l2-1")
 outdir = os.path.join(basedir,"Test-jitter-lonlat-0.1-only-input-gap-jitter-smaller-l2-0.05")
 outdir = os.path.join(basedir,"Test-jitter-lonlat-0.1-only-input-gap-jitter-smaller-l2-0.7")
+outdir = os.path.join(basedir,"Optimization3")
 
 
 maskname = os.path.join(basedir,"mask.nc")
@@ -152,8 +166,8 @@ def binanalysis(obslon,obslat,obsvalue,obsinvsigma2,lon,lat, dtype = np.float32,
 #     obsvalue[sel],obslon[sel],obslat[sel],obsdepth[sel],obstime[sel])
 
 
-obsvalue,obslon,obslat,obsdepth,obstime = loadobs(fname,varname)
-obsmonths = obstime.astype('datetime64[M]').astype(int) % 12 + 1
+#obsvalue,obslon,obslat,obsdepth,obstime = loadobs(fname,varname)
+#obsmonths = obstime.astype('datetime64[M]').astype(int) % 12 + 1
 
 # month = 1
 
@@ -180,13 +194,15 @@ obsmonths = obstime.astype('datetime64[M]').astype(int) % 12 + 1
 def dist(lon1,lat1,lon2,lat2):
     return np.sqrt((lon1 - lon2)**2 + (lat2 - lat1)**2)
 
-def loadobsdata(train=True, jitter_std_lon = 0., jitter_std_lat = 0., jitter_std_value = 0.):
+def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
+                train=True, jitter_std_lon = 0., jitter_std_lat = 0., jitter_std_value = 0.):
 
     nvar = 6
     sz = (len(lat),len(lon))
     ntime = 12
     meandataval = 15
     meandata = np.ma.array(meandataval * np.ones(sz), mask = np.logical_not(mask))
+    obsmonths = obstime.astype('datetime64[M]').astype(int) % 12 + 1
 
     def datagen():
         for month in range(1,ntime+1):
@@ -330,7 +346,7 @@ def monthlyCVRMS_files(fname,fnamecv,varname):
     v = ds.variables["mean_rec"][:].filled(np.NaN)
 
     obsvalue,obslon,obslat,obsdepth,obstime = loadobs(fnamecv,varname)
-
+    ds.close()
     return monthlyCVRMS(lon,lat,depth,v,obsvalue,obslon,obslat,obsdepth,obstime)
 
 jitter_std_lon = 2*(lon[1]-lon[0])
@@ -343,16 +359,16 @@ jitter_std_lon = jitter_std_lat / math.cos(lat.mean()*math.pi/180)
 
 jitter_std_value = 0.5
 
-train_datagen,train_len,meandata = loadobsdata(
-    train = True,
-    jitter_std_lon = jitter_std_lon,
-    jitter_std_lat = jitter_std_lat,
-    jitter_std_value = jitter_std_value)
+# train_datagen,train_len,meandata = loadobsdata(
+#     train = True,
+#     jitter_std_lon = jitter_std_lon,
+#     jitter_std_lat = jitter_std_lat,
+#     jitter_std_value = jitter_std_value)
 
-test_datagen,test_len,meandata_test = loadobsdata(train = False)
+# test_datagen,test_len,meandata_test = loadobsdata(train = False)
 
 
-mask = meandata.mask
+# mask = meandata.mask
 
 # xin,x = next(train_datagen())
 
@@ -379,15 +395,91 @@ mask = meandata.mask
 # #xin,x = next(test_datagen())
 
 
+default_parameters = [0.1, 4, 1.5]
+dimensions = [
+    Real(low=1e-6, high=2., prior="log-uniform", name="regularization_L2_beta"),
+    #Integer(low=2, high = 6, name = "ndepth"),
+    Integer(low=4, high = 6, name = "ndepth"),
+    #Real(low=1.1, high = 1.8, name = "ksize_factor")
+    Real(low=1., high = 1.5, name = "ksize_factor")
+]
 
-fname = DINCAE.reconstruct(lon,lat,mask,meandata,
-                    train_datagen,train_len,
-                    test_datagen,test_len,
-                    outdir,
-                    **reconstruct_params)
+
+def check(regularization_L2_beta,ndepth,ksize_factor):
+
+    #ndepth = 4
+    #ksize_factor = 3/2
+
+    enc_ksize_internal = [ int(16 * (ksize_factor)**i) for i in range(ndepth)]
+
+    obsvalue,obslon,obslat,obsdepth,obstime = loadobs(fnametrain,varname)
+
+    train_datagen,train_len,meandata = loadobsdata(
+        obsvalue,obslon,obslat,obsdepth,obstime,
+        train = True,
+        jitter_std_lon = jitter_std_lon,
+        jitter_std_lat = jitter_std_lat,
+        jitter_std_value = jitter_std_value)
+
+    test_datagen,test_len,meandata_test = loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,train = False)
+
+    mask = meandata.mask
+
+    fname = DINCAE.reconstruct(
+        lon,lat,mask,meandata,
+        train_datagen,train_len,
+        test_datagen,test_len,
+        outdir,
+        **{**reconstruct_params,
+           "regularization_L2_beta": regularization_L2_beta,
+           "enc_ksize_internal": enc_ksize_internal
+        })
+
+    return fname
+
+
+
+@use_named_args(dimensions=dimensions)
+def fitness(regularization_L2_beta,ndepth,ksize_factor):
+
+    bestRMS = getattr(fitness, 'bestRMS', 1e9)
+    # https://github.com/tensorflow/tensorflow/issues/17048#issuecomment-368082470
+    with Pool(1) as p:
+        fname = p.apply(check,(regularization_L2_beta,ndepth,ksize_factor))
+
+    fnamecv = os.path.join(basedir,"Temperature.cv.nc")
+    varname = "Temperature"
+
+    RMS,totRMS = monthlyCVRMS_files(fname,fnamecv,varname)
+
+    with open(os.path.join(outdir,"test.jsonl"),mode="a") as f:
+        data = {'totRMS': totRMS,
+                'regularization_L2_beta': regularization_L2_beta,
+                'ndepth': int(ndepth),
+                'ksize_factor': ksize_factor,
+                'RMS': list(RMS)}
+        print(data)
+        print(json.dumps(data, sort_keys=True, indent=None),
+              file=f,flush=True)
+
+    if totRMS < bestRMS:
+        fitness.bestRMS = totRMS
+    else:
+        # remove reconstruction
+        os.remove(fname)
+
+    return totRMS
+
+search_result = skopt.gp_minimize(
+    func=fitness,
+    dimensions=dimensions,
+    acq_func='EI', # Expected Improvement.
+    n_calls=130,
+    x0=default_parameters)
+
+print("search_result ",search_result)
+
+print("search_result x",search_result.x)
+print("search_result fun",search_result.fun)
 
 #fname = "/mnt/data1/abarth/work/Data/DINCAE_insitu/Test-jitter-lonlat-0.1-only-input-gap-jitter-smaller-l2-0.7/data-2019-07-08T143513.nc";
-fnamecv = os.path.join(basedir,"Temperature.cv.nc")
-varname = "Temperature"
-
-RMS,totRMS = monthlyCVRMS_files(fname,fnamecv,varname)
