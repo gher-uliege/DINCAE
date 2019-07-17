@@ -188,7 +188,7 @@ def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
                 train=True, jitter_std_lon = 0., jitter_std_lat = 0., jitter_std_value = 0.):
 
     #nvar = 6
-    nvar = 7
+    nvar = 11
     sz = (len(lat),len(lon))
     ntime = 12
     meandataval = 15
@@ -196,7 +196,7 @@ def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
     obsmonths = obstime.astype('datetime64[M]').astype(int) % 12 + 1
 
     depthr = np.array([0.,5, 10, 15, 20, 25, 30, 40, 50, 66, 75, 85, 100, 112, 125, 135, 150, 175, 200, 225, 250, 275, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1250, 1300, 1350, 1400, 1450, 1500, 1600, 1750, 1850, 2000])
-    depthr = np.array([0., 15])
+    depthr = np.array([0., 15, 25, 35, 100])
     nslices = ntime * len(depthr)
 
     def datagen():
@@ -227,11 +227,21 @@ def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
                 x[:,:,0] = msum[k,:,:]
                 #x[:,:,0] = mmean[k,:,:]
                 x[:,:,1] = minvsigma2[k,:,:]
+
                 x[:,:,2] = lon.reshape(1,len(lon))
                 x[:,:,3] = lat.reshape(len(lat),1)
                 x[:,:,4] = depthr[k]
                 x[:,:,5] = np.cos(2*math.pi * (month-1) / 12)
                 x[:,:,6] = np.sin(2*math.pi * (month-1) / 12)
+
+                # previous layer
+                kp = max(k-1,0)
+                x[:,:,7] = msum[kp,:,:]
+                x[:,:,8] = minvsigma2[kp,:,:]
+
+                kn = min(k+1,len(depthr)-1)
+                x[:,:,9] = msum[kn,:,:]
+                x[:,:,10] = minvsigma2[kn,:,:]
 
                 #print("range x",k,x.min(),x.max())
 
