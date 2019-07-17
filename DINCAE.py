@@ -553,10 +553,6 @@ e.g. sea points for sea surface temperature.
     sess.run(tf.global_variables_initializer())
     logger.debug('init done')
 
-    # adding these 2 lines fixed the hang forever problem
-    coord = tf.train.Coordinator()
-    threads = tf.train.start_queue_runners(sess=sess, coord=coord)
-
     saver = tf.train.Saver()
 
     # final output file name
@@ -569,14 +565,14 @@ e.g. sea points for sea surface temperature.
         for ii in range(ceil(train_len / batch_size)):
 
             # run a single step of the optimizer
-            logger.debug('running')
+            #logger.debug(f'running {ii}')
             summary, batch_cost, batch_RMS, bs, _ = sess.run(
                 [merged, cost, RMS, mask_noncloud, opt],feed_dict={
                     handle: train_iterator_handle,
                     mask_issea: mask,
                     dropout_rate: dropout_rate_train})
 
-            logger.debug('running done')
+            #logger.debug('running done')
 
             if tensorboard:
                 train_writer.add_summary(summary, index)
@@ -605,6 +601,7 @@ e.g. sea points for sea surface temperature.
                                   mask_issea: mask })
 
                 # time instances already written
+                print("save")
                 offset = ii*batch_size
                 savesample(fname,batch_m_rec,batch_σ2_rec,meandata,lon,lat,e,ii,
                            offset)

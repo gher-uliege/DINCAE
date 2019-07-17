@@ -28,7 +28,7 @@ import shutil
 
 
 epochs = 5000*2
-epochs = 1000
+epochs = 100
 #epochs = 5
 
 reconstruct_params = {
@@ -95,7 +95,7 @@ def loadobs(fname,varname):
 
     #sel = (obsdepth < 10) & (lon[0] < obslon) & (obslon < lon[-1]) & (lat[0] < obslat) & (obslat < lat[-1]) & (np.abs(obsvalue) < 200)
     sel = (lon[0] < obslon) & (obslon < lon[-1]) & (lat[0] < obslat) & (obslat < lat[-1]) & (np.abs(obsvalue) < 200) & np.isfinite(obsvalue)
-    print("depth ",obsdepth.min(), obsdepth.max())
+    #print("depth ",obsdepth.min(), obsdepth.max())
 
     return obsvalue[sel],obslon[sel],obslat[sel],obsdepth[sel],obstime[sel]
 
@@ -114,7 +114,7 @@ def binanalysis(obslon,obslat,obsdepth,obsvalue,obsinvsigma2,lon,lat,depth, dtyp
 
     for l in range(len(depth)):
         sel =  (depthbounds[l] <= obsdepth) & (obsdepth < depthbounds[l+1])
-        print("sel ",np.sum(sel))
+        #print("sel ",np.sum(sel))
         k[sel] = l
 
     sel = (0 <= i) & (i < len(lon)) & (0 <= j) & (j < len(lat)) & (k != -1)
@@ -233,7 +233,7 @@ def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
                 x[:,:,5] = np.cos(2*math.pi * (month-1) / 12)
                 x[:,:,6] = np.sin(2*math.pi * (month-1) / 12)
 
-                print("range x",k,x.min(),x.max())
+                #print("range x",k,x.min(),x.max())
 
                 xin = x.copy()
 
