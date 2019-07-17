@@ -85,7 +85,8 @@ def loadobs(fname,varname):
     obstime = np.datetime64('1900-01-01T00:00:00') + np.array(24*60*60*obstime.data,dtype=np.int)
     # https://stackoverflow.com/a/26895491/3801401
 
-    sel = (obsdepth < 10) & (lon[0] < obslon) & (obslon < lon[-1]) & (lat[0] < obslat) & (obslat < lat[-1]) & (np.abs(obsvalue) < 200)
+    #sel = (obsdepth < 10) & (lon[0] < obslon) & (obslon < lon[-1]) & (lat[0] < obslat) & (obslat < lat[-1]) & (np.abs(obsvalue) < 200)
+    sel = (lon[0] < obslon) & (obslon < lon[-1]) & (lat[0] < obslat) & (obslat < lat[-1]) & (np.abs(obsvalue) < 200)
 
 
     return obsvalue[sel],obslon[sel],obslat[sel],obsdepth[sel],obstime[sel]
