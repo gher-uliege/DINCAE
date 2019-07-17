@@ -36,6 +36,13 @@ from netCDF4 import Dataset, num2date
 import numpy as np
 import tensorflow as tf
 from datetime import datetime
+import logging
+
+logger = logging.getLogger('root')
+FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
+logging.basicConfig(format=FORMAT)
+logger.setLevel(logging.DEBUG)
+
 
 __all__ = ["reconstruct","load_gridded_nc","data_generator","reconstruct_gridded_nc"]
 
@@ -332,6 +339,8 @@ e.g. sea points for sea surface temperature.
 
     print("regularization_L2_beta ",regularization_L2_beta)
     print("enc_ksize_internal ",enc_ksize_internal)
+    print("nvar ",nvar)
+
     enc_ksize = [nvar] + enc_ksize_internal
 
     if not os.path.isdir(outdir):
@@ -540,7 +549,13 @@ e.g. sea points for sea surface temperature.
 
     index = 0
 
+    print("init")
     sess.run(tf.global_variables_initializer())
+    logger.debug('init done')
+
+    # adding these 2 lines fixed the hang forever problem
+    coord = tf.train.Coordinator()
+    threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 
     saver = tf.train.Saver()
 
@@ -554,11 +569,14 @@ e.g. sea points for sea surface temperature.
         for ii in range(ceil(train_len / batch_size)):
 
             # run a single step of the optimizer
+            logger.debug('running')
             summary, batch_cost, batch_RMS, bs, _ = sess.run(
                 [merged, cost, RMS, mask_noncloud, opt],feed_dict={
                     handle: train_iterator_handle,
                     mask_issea: mask,
                     dropout_rate: dropout_rate_train})
+
+            logger.debug('running done')
 
             if tensorboard:
                 train_writer.add_summary(summary, index)
