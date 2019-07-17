@@ -18,7 +18,14 @@ from skopt.utils import use_named_args
 import json
 import shutil
 
-from multiprocessing import Pool
+#from multiprocessing import Pool
+
+# from julia.api import Julia
+# jl = Julia(compiled_modules=False)
+# jl.eval('push!(LOAD_PATH,joinpath(ENV["HOME"],"projects/Julia/share"))')
+# jl.eval('push!(LOAD_PATH,joinpath(ENV["HOME"],"src","CAE"))')
+# from julia import dincae_insitu
+
 
 epochs = 5000*2
 epochs = 1000
@@ -165,7 +172,6 @@ def binanalysis(obslon,obslat,obsdepth,obsvalue,obsinvsigma2,lon,lat,depth, dtyp
 # #plt.plot(obslon[sel],obslat[sel],".")
 # #plt.show()
 
-# mmean = binaverage(mobslon,mobslat,mobsvalue,lon,lat)
 
 # mobsinvsigma2 = np.ones(mobsvalue.shape)
 
@@ -311,7 +317,6 @@ def savesample(fname,batch_m_rec,batch_σ2_rec,meandata,lon,lat,e,ii,offset):
 def monthlyCVRMS(lon,lat,depth,value,obsvalue,obslon,obslat,obsdepth,obstime):
     obsmonths = obstime.astype('datetime64[M]').astype(int) % 12
 
-
     RMS = np.zeros((12))
 
     for month in range(0,12):
@@ -387,16 +392,6 @@ jitter_std_value = 0.5
 # #xin,x = next(test_datagen())
 
 
-default_parameters = [0.1, 4, 1.5]
-dimensions = [
-    Real(low=1e-6, high=2., prior="log-uniform", name="regularization_L2_beta"),
-    #Integer(low=2, high = 6, name = "ndepth"),
-    Integer(low=4, high = 6, name = "ndepth"),
-    #Real(low=1.1, high = 1.8, name = "ksize_factor")
-    Real(low=1., high = 1.5, name = "ksize_factor")
-]
-
-
 def check(regularization_L2_beta,ndepth,ksize_factor):
 
     #ndepth = 4
@@ -432,11 +427,19 @@ def check(regularization_L2_beta,ndepth,ksize_factor):
     return fname
 
 
+dimensions = [
+    Real(low=1e-6, high=2., prior="log-uniform", name="regularization_L2_beta"),
+    #Integer(low=2, high = 6, name = "ndepth"),
+    Integer(low=4, high = 6, name = "ndepth"),
+    #Real(low=1.1, high = 1.8, name = "ksize_factor")
+    Real(low=1., high = 1.5, name = "ksize_factor")
+]
 
 @use_named_args(dimensions=dimensions)
-def fitness(regularization_L2_beta,ndepth,ksize_factor):
+def DINCAE_fitness(regularization_L2_beta,ndepth,ksize_factor):
 
-    bestRMS = getattr(fitness, 'bestRMS', 1e9)
+    print("parameters ",regularization_L2_beta,ndepth,ksize_factor)
+    bestRMS = getattr(DINCAE_fitness, 'bestRMS', 1e9)
     # https://github.com/tensorflow/tensorflow/issues/17048#issuecomment-368082470
     with Pool(1) as p:
         fname = p.apply(check,(regularization_L2_beta,ndepth,ksize_factor))
@@ -457,24 +460,84 @@ def fitness(regularization_L2_beta,ndepth,ksize_factor):
               file=f,flush=True)
 
     if totRMS < bestRMS:
-        fitness.bestRMS = totRMS
+        DINCAE_fitness.bestRMS = totRMS
     else:
         # remove reconstruction
         os.remove(fname)
 
     return totRMS
 
-# search_result = skopt.gp_minimize(
-#     func=fitness,
-#     dimensions=dimensions,
-#     acq_func='EI', # Expected Improvement.
-#     n_calls=130,
-#     x0=default_parameters)
+def optim_DINCAE():
+    default_parameters = [0.1, 4, 1.5]
 
-# print("search_result ",search_result)
+    search_result = skopt.gp_minimize(
+        func=DINCAE_fitness,
+        dimensions=dimensions,
+        acq_func='EI', # Expected Improvement.
+        #n_calls=30,
+        n_calls=1,
+        x0=default_parameters)
 
-# print("search_result x",search_result.x)
-# print("search_result fun",search_result.fun)
+    print("search_result ",search_result)
 
-check(0.1, 4, 1.5)
-#fname = "/mnt/data1/abarth/work/Data/DINCAE_insitu/Test-jitter-lonlat-0.1-only-input-gap-jitter-smaller-l2-0.7/data-2019-07-08T143513.nc";
+    print("search_result x",search_result.x)
+    print("search_result fun",search_result.fun)
+
+
+DIVAnd_dimensions = [
+    Real(low=100_000., high=300_000., name="hlen"),
+    Real(low=0.01, high = 10., name = "epsilon2")
+]
+
+@use_named_args(dimensions=DIVAnd_dimensions)
+def DIVAnd_fitness(hlen,epsilon2):
+
+    bestRMS = getattr(DIVAnd_fitness, 'bestRMS', 1e9)
+
+    fname = dincae_insitu.DIVAnd_check(hlen,epsilon2)
+
+    fnamecv = os.path.join(basedir,"Temperature.cv.nc")
+    varname = "Temperature"
+
+    RMS,totRMS = monthlyCVRMS_files(fname,fnamecv,varname)
+
+    with open(os.path.join(outdir,"DIVAnd.jsonl"),mode="a") as f:
+        data = {'totRMS': totRMS,
+                'hlen': hlen,
+                'epsilon2':  epsilon2,
+                'RMS': list(RMS)}
+        print(data)
+        print(json.dumps(data, sort_keys=True, indent=None),
+              file=f,flush=True)
+
+    if totRMS < bestRMS:
+        DIVAnd_fitness.bestRMS = totRMS
+    else:
+        # remove reconstruction
+        os.remove(fname)
+
+    return totRMS
+
+
+def optim_DIVAnd():
+
+    search_result = skopt.gp_minimize(
+        func=DIVAnd_fitness,
+        dimensions=DIVAnd_dimensions,
+        acq_func='EI', # Expected Improvement.
+        n_calls=30,
+        x0=[150_000,1.])
+
+    print("search_result ",search_result)
+
+    print("search_result x",search_result.x)
+    print("search_result fun",search_result.fun)
+
+
+#optim_DIVAnd()
+#optim_DINCAE()
+regularization_L2_beta,ndepth,ksize_factor = (0.1, 4, 1.5)
+
+check(regularization_L2_beta,ndepth,ksize_factor)
+
+#DINCAE_fitness([regularization_L2_beta,ndepth,ksize_factor])
