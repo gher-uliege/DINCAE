@@ -87,8 +87,8 @@ def loadobs(fname,varname):
     # https://stackoverflow.com/a/26895491/3801401
 
     #sel = (obsdepth < 10) & (lon[0] < obslon) & (obslon < lon[-1]) & (lat[0] < obslat) & (obslat < lat[-1]) & (np.abs(obsvalue) < 200)
-    sel = (lon[0] < obslon) & (obslon < lon[-1]) & (lat[0] < obslat) & (obslat < lat[-1]) & (np.abs(obsvalue) < 200)
-
+    sel = (lon[0] < obslon) & (obslon < lon[-1]) & (lat[0] < obslat) & (obslat < lat[-1]) & (np.abs(obsvalue) < 200) & np.isfinite(obsvalue)
+    print("depth ",obsdepth.min(), obsdepth.max())
 
     return obsvalue[sel],obslon[sel],obslat[sel],obsdepth[sel],obstime[sel]
 
@@ -106,7 +106,9 @@ def binanalysis(obslon,obslat,obsdepth,obsvalue,obsinvsigma2,lon,lat,depth, dtyp
     depthbounds[-1] = depth[-1]
 
     for l in range(len(depth)):
-        k[ (depthbounds[l] <= obsdepth) & (obsdepth < depthbounds[l+1]) ] = l
+        sel =  (depthbounds[l] <= obsdepth) & (obsdepth < depthbounds[l+1])
+        print("sel ",np.sum(sel))
+        k[sel] = l
 
     sel = (0 <= i) & (i < len(lon)) & (0 <= j) & (j < len(lat)) & (k != -1)
 
@@ -185,7 +187,9 @@ def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
     meandata = np.ma.array(meandataval * np.ones(sz), mask = np.logical_not(mask))
     obsmonths = obstime.astype('datetime64[M]').astype(int) % 12 + 1
 
+    depthr = np.array([0.,5, 10, 15, 20, 25, 30, 40, 50, 66, 75, 85, 100, 112, 125, 135, 150, 175, 200, 225, 250, 275, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1250, 1300, 1350, 1400, 1450, 1500, 1600, 1750, 1850, 2000])
     depthr = np.array([0., 15])
+    nslices = ntime * len(depthr)
 
     def datagen():
         for month in range(1,ntime+1):
@@ -221,9 +225,8 @@ def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
                 x[:,:,5] = np.cos(2*math.pi * (month-1) / 12)
                 x[:,:,6] = np.sin(2*math.pi * (month-1) / 12)
 
-                #print("range x",x[:,:,0].min(),x[:,:,0].max())
+                print("range x",k,x.min(),x.max())
 
-                #x = np.stack((msum,minvsigma2),axis=-1)
                 xin = x.copy()
 
                 if train:
@@ -257,7 +260,7 @@ def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
 
                 yield (xin,x[:,:,0:2])
 
-    return datagen,ntime,meandata,nvar
+    return datagen,nslices,meandata,nvar
 
 
 def savesample(fname,batch_m_rec,batch_σ2_rec,meandata,lon,lat,e,ii,offset):
