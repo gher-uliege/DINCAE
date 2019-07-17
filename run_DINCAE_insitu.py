@@ -51,17 +51,7 @@ fnametrain = os.path.join(basedir,"Temperature.train.nc")
 varname = "Salinity"
 varname = "Temperature"
 
-outdir = os.path.join(basedir,"Test1")
-outdir = os.path.join(basedir,"Test-jitter-lonlat-0.1")
-outdir = os.path.join(basedir,"Test-jitter-lonlat-0.1-only-input")
-outdir = os.path.join(basedir,"Test-jitter-lonlat-0.1-only-input-gap")
-outdir = os.path.join(basedir,"Test-jitter-lonlat-0.1-only-input-gap-jitter-obs")
-outdir = os.path.join(basedir,"Test-jitter-lonlat-0.1-only-input-gap-jitter-smaller-l2-0.01")
-outdir = os.path.join(basedir,"Test-jitter-lonlat-0.1-only-input-gap-jitter-smaller-l2-0.01-test")
-outdir = os.path.join(basedir,"Test-jitter-lonlat-0.1-only-input-gap-jitter-smaller-l2-1")
-outdir = os.path.join(basedir,"Test-jitter-lonlat-0.1-only-input-gap-jitter-smaller-l2-0.05")
-outdir = os.path.join(basedir,"Test-jitter-lonlat-0.1-only-input-gap-jitter-smaller-l2-0.7")
-outdir = os.path.join(basedir,"Optimization3")
+outdir = os.path.join(basedir,"Optimization5")
 
 
 maskname = os.path.join(basedir,"mask.nc")
@@ -101,24 +91,7 @@ def loadobs(fname,varname):
     return obsvalue[sel],obslon[sel],obslat[sel],obsdepth[sel],obstime[sel]
 
 
-def binaverage(obslon,obslat,obsvalue,lon,lat):
-    i = np.array( np.rint( (obslon - lon[0])/(lon[1]-lon[0])), dtype = np.int64 )
-    j = np.array( np.rint( (obslat - lat[0])/(lat[1]-lat[0])), dtype = np.int64 )
-
-    lin = j*len(lon) + i
-
-    sz = (len(lat),len(lon))
-    length = len(lat) * len(lon)
-
-    mcount = np.bincount(lin,minlength = length).reshape(sz);
-    msum = np.bincount(lin,weights=obsvalue,minlength = length).reshape(sz);
-    mmean = np.NaN * np.zeros(sz)
-
-    mmean[mcount > 0] = msum[mcount > 0] / mcount[mcount > 0]
-    return mmean
-
-
-def binanalysis(obslon,obslat,obsvalue,obsinvsigma2,lon,lat, dtype = np.float32,
+def binanalysis(obslon,obslat,obsdepth,obsvalue,obsinvsigma2,lon,lat,depth, dtype = np.float32,
                 sigma2_min = (0.2)**2 # dimensional !!!
 ):
     i = np.array( np.rint( (obslon - lon[0])/(lon[1]-lon[0])), dtype = np.int64 )
@@ -202,6 +175,8 @@ def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
     meandata = np.ma.array(meandataval * np.ones(sz), mask = np.logical_not(mask))
     obsmonths = obstime.astype('datetime64[M]').astype(int) % 12 + 1
 
+    depthr = np.array([0.,5, 10, 15, 20, 25, 30, 40, 50, 66, 75, 85, 100, 112, 125, 135, 150, 175, 200, 225, 250, 275, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1250, 1300, 1350, 1400, 1450, 1500, 1600, 1750, 1850, 2000])
+
     def datagen():
         for month in range(1,ntime+1):
             sel = obsmonths == month
@@ -217,7 +192,7 @@ def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
             #    mobslat += jitter_std_lat * np.random.randn(mobslat.shape[0])
 
             mobsinvsigma2 = np.ones(mobsvalue.shape)
-            mmean,msum,minvsigma2 = binanalysis(mobslon,mobslat,mobsvalue - meandataval,mobsinvsigma2,lon,lat)
+            mmean,msum,minvsigma2 = binanalysis(mobslon,mobslat,mobsdepth,mobsvalue - meandataval,mobsinvsigma2,lon,lat,depthr)
 
             # debug
             #mmean[minvsigma2 == 0] = 0
@@ -328,7 +303,7 @@ def monthlyCVRMS(lon,lat,depth,value,obsvalue,obslon,obslat,obsdepth,obstime):
         mobsvalue,mobslon,mobslat,mobsdepth,mobstime = (
             obsvalue[sel],obslon[sel],obslat[sel],obsdepth[sel],obstime[sel])
 
-        mclim = scipy.interpolate.interpn((lat,lon),value[month,:,:],  np.vstack( (mobslat,mobslon) ).T )
+        mclim = scipy.interpolate.interpn((depth,lat,lon),value[month,:,:,:],  np.vstack( (mobsdepth,mobslat,mobslon) ).T )
         sel = np.isfinite(mclim);
         RMS[month] = np.sqrt(np.mean((mclim[sel] - mobsvalue[sel])**2))
 
@@ -340,8 +315,10 @@ def monthlyCVRMS_files(fname,fnamecv,varname):
     ds = Dataset(fname);
     lon = ds.variables["lon"][:]
     lat = ds.variables["lat"][:]
-    depth = [] # unused
-    v = ds.variables["mean_rec"][:].filled(np.NaN)
+    depth = ds.variables["depth"][:]
+
+    #v = ds.variables["mean_rec"][:].filled(np.NaN)
+    v = ds.variables[varname][:].filled(np.NaN)
 
     obsvalue,obslon,obslat,obsdepth,obstime = loadobs(fnamecv,varname)
     ds.close()
@@ -357,13 +334,13 @@ jitter_std_lon = jitter_std_lat / math.cos(lat.mean()*math.pi/180)
 
 jitter_std_value = 0.5
 
-# train_datagen,train_len,meandata = loadobsdata(
+# train_datagen,train_len,meandata,nvar = loadobsdata(
 #     train = True,
 #     jitter_std_lon = jitter_std_lon,
 #     jitter_std_lat = jitter_std_lat,
 #     jitter_std_value = jitter_std_value)
 
-# test_datagen,test_len,meandata_test = loadobsdata(train = False)
+# test_datagen,test_len,meandata_test,nvar_test = loadobsdata(train = False)
 
 
 # mask = meandata.mask
