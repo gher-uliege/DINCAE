@@ -35,6 +35,7 @@ reconstruct_params = {
     #"save_each": 5,
     "save_each": 0,
     "dropout_rate_train": 0.3,
+    #"shuffle_buffer_size": 120,
     "shuffle_buffer_size": 12,
     "resize_method": tf.image.ResizeMethod.BILINEAR,
     "enc_ksize_internal": [16,24,36,54],
@@ -97,14 +98,22 @@ def binanalysis(obslon,obslat,obsdepth,obsvalue,obsinvsigma2,lon,lat,depth, dtyp
 ):
     i = np.array( np.rint( (obslon - lon[0])/(lon[1]-lon[0])), dtype = np.int64 )
     j = np.array( np.rint( (obslat - lat[0])/(lat[1]-lat[0])), dtype = np.int64 )
+    k = -np.ones(len(obsdepth),dtype = np.int64)
 
-    sel = (0 <= i) & (i < len(lon)) & (0 <= j) & (j < len(lat))
+    depthbounds = np.zeros(len(depth)+1)
+    depthbounds[0] = depth[0]
+    depthbounds[1:-1] = (depth[1:] + depth[0:-1])/2
+    depthbounds[-1] = depth[-1]
 
-    lin = j[sel]*len(lon) + i[sel]
+    for l in range(len(depth)):
+        k[ (depthbounds[l] <= obsdepth) & (obsdepth < depthbounds[l+1]) ] = l
 
-    sz = (len(lat),len(lon))
-    length = len(lat) * len(lon)
+    sel = (0 <= i) & (i < len(lon)) & (0 <= j) & (j < len(lat)) & (k != -1)
 
+    lin = k[sel]*len(lon)*len(lat) + j[sel]*len(lon) + i[sel]
+
+    sz = (len(depth),len(lat),len(lon))
+    length = len(depth) * len(lat) * len(lon)
 
     msum = np.bincount(lin,weights=obsvalue[sel]*obsinvsigma2[sel],minlength = length).reshape(sz);
     minvsigma2 = np.bincount(lin,weights=obsinvsigma2[sel],minlength = length).reshape(sz);
@@ -120,7 +129,6 @@ def binanalysis(obslon,obslat,obsdepth,obsvalue,obsinvsigma2,lon,lat,depth, dtyp
     msum = alpha * msum
 
     #print("min sigma2 after ",1/minvsigma2.max())
-
 
     mmean = np.NaN * np.zeros(sz, dtype = dtype)
     #mmean = np.zeros(sz, dtype = dtype)
@@ -169,7 +177,7 @@ def dist(lon1,lat1,lon2,lat2):
 def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
                 train=True, jitter_std_lon = 0., jitter_std_lat = 0., jitter_std_value = 0.):
 
-    nvar = 6
+    nvar = 7
     sz = (len(lat),len(lon))
     ntime = 12
     meandataval = 15
@@ -195,56 +203,58 @@ def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
             mobsinvsigma2 = np.ones(mobsvalue.shape)
             mmean,msum,minvsigma2 = binanalysis(mobslon,mobslat,mobsdepth,mobsvalue - meandataval,mobsinvsigma2,lon,lat,depthr)
 
-            # debug
-            #mmean[minvsigma2 == 0] = 0
-            #minvsigma2[minvsigma2 != 0] = 1
+            for k in [0]:
+                # debug
+                #mmean[minvsigma2 == 0] = 0
+                #minvsigma2[minvsigma2 != 0] = 1
 
-            #plt.pcolor(minvsigma2); plt.colorbar(); plt.show()
-            #plt.pcolor(mmean, cmap="jet"); plt.colorbar(); plt.show()
-            x = np.zeros((len(lat),len(lon),nvar),dtype = np.float32)
-            x[:,:,0] = msum
-            #x[:,:,0] = mmean
-            x[:,:,1] = minvsigma2
-            x[:,:,2] = lon.reshape(1,len(lon))
-            x[:,:,3] = lat.reshape(len(lat),1)
-            x[:,:,4] = np.cos(2*math.pi * (month-1) / 12)
-            x[:,:,5] = np.sin(2*math.pi * (month-1) / 12)
+                #plt.pcolor(minvsigma2); plt.colorbar(); plt.show()
+                #plt.pcolor(mmean, cmap="jet"); plt.colorbar(); plt.show()
+                x = np.zeros((len(lat),len(lon),nvar),dtype = np.float32)
+                x[:,:,0] = msum[k,:,:]
+                #x[:,:,0] = mmean[k,:,:]
+                x[:,:,1] = minvsigma2[k,:,:]
+                x[:,:,2] = lon.reshape(1,len(lon))
+                x[:,:,3] = lat.reshape(len(lat),1)
+                x[:,:,4] = depthr[k]
+                x[:,:,5] = np.cos(2*math.pi * (month-1) / 12)
+                x[:,:,6] = np.sin(2*math.pi * (month-1) / 12)
 
-            #print("range x",x[:,:,0].min(),x[:,:,0].max())
+                #print("range x",x[:,:,0].min(),x[:,:,0].max())
 
-            #x = np.stack((msum,minvsigma2),axis=-1)
-            xin = x.copy()
+                #x = np.stack((msum,minvsigma2),axis=-1)
+                xin = x.copy()
 
-            if train:
-                # add noise where we have data
-                sel = minvsigma2 > 0
-                xin[:,:,0][sel] += jitter_std_value * np.random.randn(np.sum(sel))
-                xin[:,:,1][sel] = 1/(1/minvsigma2[sel] + jitter_std_value**2)
+                if train:
+                    # add noise where we have data
+                    sel = minvsigma2[k,:,:] > 0
+                    xin[:,:,0][sel] += jitter_std_value * np.random.randn(np.sum(sel))
+                    xin[:,:,1][sel] = 1/(1/minvsigma2[k,:,:][sel] + jitter_std_value**2)
 
-                xin[:,:,2] += jitter_std_lon * np.random.randn(len(lat),len(lon))
-                xin[:,:,3] += jitter_std_lat * np.random.randn(len(lat),len(lon))
+                    xin[:,:,2] += jitter_std_lon * np.random.randn(len(lat),len(lon))
+                    xin[:,:,3] += jitter_std_lat * np.random.randn(len(lat),len(lon))
 
 
-            if train:
-                size_gap = 1.5
-                min_gap_count = 50
-                #cvtrain = 0.2
-                #selmask = np.random.rand(sz[0],sz[1]) < cvtrain
+                if train:
+                    size_gap = 1.5
+                    min_gap_count = 50
+                    #cvtrain = 0.2
+                    #selmask = np.random.rand(sz[0],sz[1]) < cvtrain
 
-                while True:
-                    gap_lon = lon[0] + (lon[-1]-lon[0]) * random.random()
-                    gap_lat = lat[0] + (lat[-1]-lat[0]) * random.random()
-                    dist_gap = dist(x[:,:,2],gap_lon,x[:,:,3],gap_lat)
-                    selmask = (dist_gap < size_gap) & (xin[:,:,1] > 0)
-                    if np.sum(selmask) >= min_gap_count:
-                        break
+                    while True:
+                        gap_lon = lon[0] + (lon[-1]-lon[0]) * random.random()
+                        gap_lat = lat[0] + (lat[-1]-lat[0]) * random.random()
+                        dist_gap = dist(x[:,:,2],gap_lon,x[:,:,3],gap_lat)
+                        selmask = (dist_gap < size_gap) & (xin[:,:,1] > 0)
+                        if np.sum(selmask) >= min_gap_count:
+                            break
 
-                #     print("too few obs at location. I try again")
+                    #     print("too few obs at location. I try again")
 
-                xin[:,:,0][selmask] = 0
-                xin[:,:,1][selmask] = 0
+                    xin[:,:,0][selmask] = 0
+                    xin[:,:,1][selmask] = 0
 
-            yield (xin,x[:,:,0:2])
+                yield (xin,x[:,:,0:2])
 
     return datagen,ntime,meandata,nvar
 
