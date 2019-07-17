@@ -36,8 +36,6 @@ reconstruct_params = {
     "save_each": 0,
     "dropout_rate_train": 0.3,
     "shuffle_buffer_size": 12,
-    # number of input variables
-    "nvar": 6,
     "resize_method": tf.image.ResizeMethod.BILINEAR,
     "enc_ksize_internal": [16,24,36,54],
     #"regularization_L2_beta": 0.,
@@ -272,7 +270,7 @@ def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
 
             yield (xin,x[:,:,0:2])
 
-    return datagen,ntime,meandata
+    return datagen,ntime,meandata,nvar
 
 
 def savesample(fname,batch_m_rec,batch_σ2_rec,meandata,lon,lat,e,ii,offset):
@@ -414,14 +412,14 @@ def check(regularization_L2_beta,ndepth,ksize_factor):
 
     obsvalue,obslon,obslat,obsdepth,obstime = loadobs(fnametrain,varname)
 
-    train_datagen,train_len,meandata = loadobsdata(
+    train_datagen,train_len,meandata,nvar = loadobsdata(
         obsvalue,obslon,obslat,obsdepth,obstime,
         train = True,
         jitter_std_lon = jitter_std_lon,
         jitter_std_lat = jitter_std_lat,
         jitter_std_value = jitter_std_value)
 
-    test_datagen,test_len,meandata_test = loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,train = False)
+    test_datagen,test_len,meandata_test,nvar_test = loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,train = False)
 
     mask = meandata.mask
 
@@ -431,6 +429,8 @@ def check(regularization_L2_beta,ndepth,ksize_factor):
         test_datagen,test_len,
         outdir,
         **{**reconstruct_params,
+           # number of input variables
+           "nvar": nvar,
            "regularization_L2_beta": regularization_L2_beta,
            "enc_ksize_internal": enc_ksize_internal
         })
@@ -470,16 +470,17 @@ def fitness(regularization_L2_beta,ndepth,ksize_factor):
 
     return totRMS
 
-search_result = skopt.gp_minimize(
-    func=fitness,
-    dimensions=dimensions,
-    acq_func='EI', # Expected Improvement.
-    n_calls=130,
-    x0=default_parameters)
+# search_result = skopt.gp_minimize(
+#     func=fitness,
+#     dimensions=dimensions,
+#     acq_func='EI', # Expected Improvement.
+#     n_calls=130,
+#     x0=default_parameters)
 
-print("search_result ",search_result)
+# print("search_result ",search_result)
 
-print("search_result x",search_result.x)
-print("search_result fun",search_result.fun)
+# print("search_result x",search_result.x)
+# print("search_result fun",search_result.fun)
 
+check(0.1, 4, 1.5)
 #fname = "/mnt/data1/abarth/work/Data/DINCAE_insitu/Test-jitter-lonlat-0.1-only-input-gap-jitter-smaller-l2-0.7/data-2019-07-08T143513.nc";
