@@ -131,7 +131,7 @@ def binanalysis(obslon,obslat,obsdepth,obsvalue,obsinvsigma2,lon,lat,depth, dtyp
     #print("min sigma2 ",1/minvsigma2.max())
 
     # correction factor
-    alpha = np.zeros(msum.shape)
+    alpha = np.ones(msum.shape)
     seldata = minvsigma2 > 0
     alpha[seldata] = 1/(minvsigma2[seldata] * sigma2_min)
     alpha[alpha > 1] = 1
@@ -189,6 +189,7 @@ def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
 
     #nvar = 6
     nvar = 11
+    #nvar = 7
     sz = (len(lat),len(lon))
     ntime = 12
     meandataval = 15
@@ -196,7 +197,6 @@ def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
     obsmonths = obstime.astype('datetime64[M]').astype(int) % 12 + 1
 
     depthr = np.array([0.,5, 10, 15, 20, 25, 30, 40, 50, 66, 75, 85, 100, 112, 125, 135, 150, 175, 200, 225, 250, 275, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1250, 1300, 1350, 1400, 1450, 1500, 1600, 1750, 1850, 2000])
-    depthr = np.array([0., 15, 25, 35, 100])
     nslices = ntime * len(depthr)
 
     def datagen():
@@ -243,7 +243,7 @@ def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
                 x[:,:,9] = msum[kn,:,:]
                 x[:,:,10] = minvsigma2[kn,:,:]
 
-                #print("range x",k,x.min(),x.max())
+                #print("range x",k,x.min(),x.max(), np.sum(np.isinf(x)), np.sum(np.isnan(x)) )
 
                 xin = x.copy()
 
@@ -260,16 +260,16 @@ def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
                 if train:
                     size_gap = 1.5
                     min_gap_count = 50
-                    #cvtrain = 0.2
-                    #selmask = np.random.rand(sz[0],sz[1]) < cvtrain
+                    cvtrain = 0.2
+                    selmask = np.random.rand(sz[0],sz[1]) < cvtrain
 
-                    while True:
-                        gap_lon = lon[0] + (lon[-1]-lon[0]) * random.random()
-                        gap_lat = lat[0] + (lat[-1]-lat[0]) * random.random()
-                        dist_gap = dist(x[:,:,2],gap_lon,x[:,:,3],gap_lat)
-                        selmask = (dist_gap < size_gap) & (xin[:,:,1] > 0)
-                        if np.sum(selmask) >= min_gap_count:
-                            break
+                    # while True:
+                    #     gap_lon = lon[0] + (lon[-1]-lon[0]) * random.random()
+                    #     gap_lat = lat[0] + (lat[-1]-lat[0]) * random.random()
+                    #     dist_gap = dist(x[:,:,2],gap_lon,x[:,:,3],gap_lat)
+                    #     selmask = (dist_gap < size_gap) & (xin[:,:,1] > 0)
+                    #     if np.sum(selmask) >= min_gap_count:
+                    #         break
 
                     #     print("too few obs at location. I try again")
 
