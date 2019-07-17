@@ -177,6 +177,7 @@ def dist(lon1,lat1,lon2,lat2):
 def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
                 train=True, jitter_std_lon = 0., jitter_std_lat = 0., jitter_std_value = 0.):
 
+    #nvar = 6
     nvar = 7
     sz = (len(lat),len(lon))
     ntime = 12
@@ -184,7 +185,7 @@ def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
     meandata = np.ma.array(meandataval * np.ones(sz), mask = np.logical_not(mask))
     obsmonths = obstime.astype('datetime64[M]').astype(int) % 12 + 1
 
-    depthr = np.array([0.,5, 10, 15, 20, 25, 30, 40, 50, 66, 75, 85, 100, 112, 125, 135, 150, 175, 200, 225, 250, 275, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1250, 1300, 1350, 1400, 1450, 1500, 1600, 1750, 1850, 2000])
+    depthr = np.array([0., 15])
 
     def datagen():
         for month in range(1,ntime+1):
@@ -203,7 +204,7 @@ def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
             mobsinvsigma2 = np.ones(mobsvalue.shape)
             mmean,msum,minvsigma2 = binanalysis(mobslon,mobslat,mobsdepth,mobsvalue - meandataval,mobsinvsigma2,lon,lat,depthr)
 
-            for k in [0]:
+            for k in range(len(depthr)):
                 # debug
                 #mmean[minvsigma2 == 0] = 0
                 #minvsigma2[minvsigma2 != 0] = 1
