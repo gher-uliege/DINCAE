@@ -124,7 +124,9 @@ def binanalysis(obslon,obslat,obsdepth,obsvalue,obsinvsigma2,lon,lat,depth, dtyp
     #print("min sigma2 ",1/minvsigma2.max())
 
     # correction factor
-    alpha = 1/(minvsigma2 * sigma2_min)
+    alpha = np.zeros(msum.shape)
+    seldata = minvsigma2 > 0
+    alpha[seldata] = 1/(minvsigma2[seldata] * sigma2_min)
     alpha[alpha > 1] = 1
 
     minvsigma2 = alpha * minvsigma2
