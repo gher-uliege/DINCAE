@@ -28,7 +28,7 @@ import shutil
 
 
 epochs = 5000*2
-epochs = 100
+epochs = 300
 #epochs = 5
 #epochs = 1
 
@@ -41,10 +41,11 @@ reconstruct_params = {
     "skipconnections": [],
     #"save_each": 100 * 2,
     #"save_each": 5,
+    #"save_each": 20,
     "save_each": 0,
     "dropout_rate_train": 0.3,
-    #"shuffle_buffer_size": 120,
-    "shuffle_buffer_size": 12,
+    "shuffle_buffer_size": 120,
+    #"shuffle_buffer_size": 12,
     "resize_method": tf.image.ResizeMethod.BILINEAR,
     "enc_ksize_internal": [16,24,36,54],
     #"regularization_L2_beta": 0.,
@@ -564,9 +565,9 @@ def optim_DIVAnd():
 
 
 #optim_DIVAnd()
-#optim_DINCAE()
-regularization_L2_beta,ndepth,ksize_factor = (0.1, 4, 1.5)
+optim_DINCAE()
+#regularization_L2_beta,ndepth,ksize_factor = (0.1, 4, 1.5)
 
-check(regularization_L2_beta,ndepth,ksize_factor)
+#check(regularization_L2_beta,ndepth,ksize_factor)
 
 #DINCAE_fitness([regularization_L2_beta,ndepth,ksize_factor])
