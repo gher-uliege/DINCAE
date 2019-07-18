@@ -18,7 +18,7 @@ from skopt.utils import use_named_args
 import json
 import shutil
 
-#from multiprocessing import Pool
+from multiprocessing import Pool
 
 # from julia.api import Julia
 # jl = Julia(compiled_modules=False)
