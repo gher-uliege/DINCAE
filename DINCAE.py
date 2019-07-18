@@ -296,7 +296,8 @@ def reconstruct(lon,lat,mask,meandata,
                 nvar = 10,
                 enc_ksize_internal = [16,24,36,54],
                 clip_grad = 5.0,
-                regularization_L2_beta = 0
+                regularization_L2_beta = 0,
+                savesample = savesample
 ):
     """
 Train a neural network to reconstruct missing data using the training data set
@@ -601,7 +602,6 @@ e.g. sea points for sea surface temperature.
                                   mask_issea: mask })
 
                 # time instances already written
-                print("save")
                 offset = ii*batch_size
                 savesample(fname,batch_m_rec,batch_σ2_rec,meandata,lon,lat,e,ii,
                            offset)

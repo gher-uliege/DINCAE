@@ -30,6 +30,7 @@ import shutil
 epochs = 5000*2
 epochs = 100
 #epochs = 5
+#epochs = 1
 
 reconstruct_params = {
     #"epochs": 1,
@@ -51,7 +52,6 @@ reconstruct_params = {
     "save_model_each": 0,
 }
 
-
 # basedir should contain all the input data
 basedir = os.path.expanduser("~/Data/DINCAE_insitu/")
 
@@ -67,7 +67,8 @@ maskname = os.path.join(basedir,"mask.nc")
 ds = Dataset(maskname, 'r')
 lon = ds.variables["lon"][:].data;
 lat = ds.variables["lat"][:].data;
-mask = np.array(ds.variables["mask"][:,:].data,dtype = np.bool);
+depthr = ds.variables["depth"][:].data;
+mask = np.array(ds.variables["mask"][:,:,:].data,dtype = np.bool);
 
 imax = len(lon)
 jmax = len(lat)
@@ -193,10 +194,9 @@ def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
     sz = (len(lat),len(lon))
     ntime = 12
     meandataval = 15
-    meandata = np.ma.array(meandataval * np.ones(sz), mask = np.logical_not(mask))
+    meandata = np.ma.array(meandataval * np.ones(sz), mask = np.logical_not(mask[0,:,:]))
     obsmonths = obstime.astype('datetime64[M]').astype(int) % 12 + 1
 
-    depthr = np.array([0.,5, 10, 15, 20, 25, 30, 40, 50, 66, 75, 85, 100, 112, 125, 135, 150, 175, 200, 225, 250, 275, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1250, 1300, 1350, 1400, 1450, 1500, 1600, 1750, 1850, 2000])
     nslices = ntime * len(depthr)
 
     def datagen():
@@ -280,49 +280,67 @@ def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
 
     return datagen,nslices,meandata,nvar
 
+class Saver4D:
+    def __init__(self,depth,mask,varname):
+        self.depth = depth
+        self.mask = mask
+        self.varname = varname
 
-def savesample(fname,batch_m_rec,batch_σ2_rec,meandata,lon,lat,e,ii,offset):
-    #print("fname,ii",fname,ii)
-    fill_value = -9999.
-    recdata = batch_m_rec # + meandata;
-    batch_sigma_rec = np.sqrt(batch_σ2_rec)
+    def __call__(self,fname,m_rec,σ2_rec,meandata,lon,lat,e,ii,offset):
+        fill_value = -9999.
+        recdata = m_rec + meandata;
+        sigma_rec = np.sqrt(σ2_rec)
 
-    if ii == 0:
-        # create file
-        root_grp = Dataset(fname, 'w', format='NETCDF4')
+        if ii == 0:
+            # create file
+            root_grp = Dataset(fname, "w", format="NETCDF4")
 
-        # dimensions
-        root_grp.createDimension('time', None)
-        root_grp.createDimension('lon', len(lon))
-        root_grp.createDimension('lat', len(lat))
+            # dimensions
+            root_grp.createDimension("time", None)
+            root_grp.createDimension("lon", len(lon))
+            root_grp.createDimension("lat", len(lat))
+            root_grp.createDimension("depth", len(self.depth))
 
-        # variables
-        #time = root_grp.createVariable('time', 'f8', ('time',))
-        nc_lon = root_grp.createVariable('lon', 'f4', ('lon',))
-        nc_lat = root_grp.createVariable('lat', 'f4', ('lat',))
-        nc_meandata = root_grp.createVariable('meandata', 'f4', ('lat','lon'), fill_value=fill_value)
+            # variables
+            nc_lon = root_grp.createVariable("lon", "f8", ("lon",))
+            nc_lat = root_grp.createVariable("lat", "f8", ("lat",))
+            nc_depth = root_grp.createVariable("depth", "f8", ("depth",))
 
-        nc_batch_m_rec = root_grp.createVariable('batch_m_rec', 'f4', ('time', 'lat', 'lon'), fill_value=fill_value)
-        nc_batch_sigma_rec = root_grp.createVariable('batch_sigma_rec', 'f4', ('time', 'lat', 'lon',), fill_value=fill_value)
+            nc_meandata = root_grp.createVariable(
+                "meandata", "f4", ("lat","lon"),
+                fill_value=fill_value)
 
-        # data
-        nc_lon[:] = lon
-        nc_lat[:] = lat
-        nc_meandata[:,:] = meandata
-    else:
-        # append to file
-        root_grp = Dataset(fname, 'a')
-        nc_batch_m_rec = root_grp.variables['batch_m_rec']
-        nc_batch_sigma_rec = root_grp.variables['batch_sigma_rec']
+            nc_mean_rec = root_grp.createVariable(
+                self.varname, "f4", ("time", "depth", "lat", "lon"),
+                fill_value=fill_value)
 
-    #print("write offset ",offset,batch_m_rec.shape[0] + offset-1)
-    for n in range(batch_m_rec.shape[0]):
-        nc_batch_m_rec[n+offset,:,:] = np.ma.masked_array(batch_m_rec[n,:,:],meandata.mask) + meandata
-        nc_batch_sigma_rec[n+offset,:,:] = np.ma.masked_array(batch_sigma_rec[n,:,:],meandata.mask)
+            nc_sigma_rec = root_grp.createVariable(
+                self.varname + "_err", "f4", ("time", "depth", "lat", "lon",),
+                fill_value=fill_value)
 
+            # data
+            nc_lon[:] = lon
+            nc_lat[:] = lat
+            nc_depth[:] = self.depth
+            nc_meandata[:,:] = meandata
+        else:
+            # append to file
+            root_grp = Dataset(fname, "a")
+            nc_mean_rec = root_grp.variables[self.varname]
+            nc_sigma_rec = root_grp.variables[self.varname + "_err"]
 
-    root_grp.close()
+        for l in range(m_rec.shape[0]):
+            # unravel the dimensions
+            k = (l+offset) % len(self.depth)
+            n = (l+offset) // len(self.depth) # integer division
+            #print("l+o,k,n",l+offset,k,n)
 
+            nc_mean_rec[n,k,:,:] = np.ma.masked_array(
+                recdata[l,:,:],np.logical_not(self.mask[k,:,:]))
+            nc_sigma_rec[n,k,:,:] = np.ma.masked_array(
+                sigma_rec[l,:,:],np.logical_not(self.mask[k,:,:]))
+
+        root_grp.close()
 
 def monthlyCVRMS(lon,lat,depth,value,obsvalue,obslon,obslat,obsdepth,obstime):
     obsmonths = obstime.astype('datetime64[M]').astype(int) % 12
@@ -420,10 +438,10 @@ def check(regularization_L2_beta,ndepth,ksize_factor):
 
     test_datagen,test_len,meandata_test,nvar_test = loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,train = False)
 
-    mask = meandata.mask
+    #mask = meandata.mask
 
     fname = DINCAE.reconstruct(
-        lon,lat,mask,meandata,
+        lon,lat,mask[0,:,:],meandata,
         train_datagen,train_len,
         test_datagen,test_len,
         outdir,
@@ -431,7 +449,8 @@ def check(regularization_L2_beta,ndepth,ksize_factor):
            # number of input variables
            "nvar": nvar,
            "regularization_L2_beta": regularization_L2_beta,
-           "enc_ksize_internal": enc_ksize_internal
+           "enc_ksize_internal": enc_ksize_internal,
+           "savesample": Saver4D(depthr,mask,varname)
         })
 
     return fname
