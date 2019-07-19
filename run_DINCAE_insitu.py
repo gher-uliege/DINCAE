@@ -20,11 +20,11 @@ import shutil
 
 from multiprocessing import Pool
 
-# from julia.api import Julia
-# jl = Julia(compiled_modules=False)
-# jl.eval('push!(LOAD_PATH,joinpath(ENV["HOME"],"projects/Julia/share"))')
-# jl.eval('push!(LOAD_PATH,joinpath(ENV["HOME"],"src","CAE"))')
-# from julia import dincae_insitu
+from julia.api import Julia
+jl = Julia(compiled_modules=False)
+jl.eval('push!(LOAD_PATH,joinpath(ENV["HOME"],"projects/Julia/share"))')
+jl.eval('push!(LOAD_PATH,joinpath(ENV["HOME"],"src","CAE"))')
+from julia import dincae_insitu
 
 
 epochs = 5000*2
@@ -60,7 +60,7 @@ fnametrain = os.path.join(basedir,"Temperature.train.nc")
 varname = "Salinity"
 varname = "Temperature"
 
-outdir = os.path.join(basedir,"Optimization5")
+outdir = os.path.join(basedir,"Optimization-DIVAnd-1")
 
 
 maskname = os.path.join(basedir,"mask.nc")
@@ -479,12 +479,14 @@ def DINCAE_fitness(regularization_L2_beta,ndepth,ksize_factor):
 
     RMS,totRMS = monthlyCVRMS_files(fname,fnamecv,varname)
 
-    with open(os.path.join(outdir,"test.jsonl"),mode="a") as f:
+    with open(os.path.join(outdir,"DINCAE.jsonl"),mode="a") as f:
         data = {'totRMS': totRMS,
                 'regularization_L2_beta': regularization_L2_beta,
                 'ndepth': int(ndepth),
                 'ksize_factor': ksize_factor,
-                'RMS': list(RMS)}
+                'RMS': list(RMS),
+                'filename': fname
+        }
         print(data)
         print(json.dumps(data, sort_keys=True, indent=None),
               file=f,flush=True)
@@ -504,8 +506,7 @@ def optim_DINCAE():
         func=DINCAE_fitness,
         dimensions=dimensions,
         acq_func='EI', # Expected Improvement.
-        #n_calls=30,
-        n_calls=1,
+        n_calls=30,
         x0=default_parameters)
 
     print("search_result ",search_result)
@@ -524,7 +525,9 @@ def DIVAnd_fitness(hlen,epsilon2):
 
     bestRMS = getattr(DIVAnd_fitness, 'bestRMS', 1e9)
 
-    fname = dincae_insitu.DIVAnd_check(hlen,epsilon2)
+    timestr = datetime.now().strftime("%Y-%m-%dT%H%M%S")
+    fname = os.path.join(outdir,"DIVAnd-{}.nc".format(timestr))
+    dincae_insitu.DIVAnd_check(hlen,epsilon2,fname)
 
     fnamecv = os.path.join(basedir,"Temperature.cv.nc")
     varname = "Temperature"
@@ -535,7 +538,9 @@ def DIVAnd_fitness(hlen,epsilon2):
         data = {'totRMS': totRMS,
                 'hlen': hlen,
                 'epsilon2':  epsilon2,
-                'RMS': list(RMS)}
+                'RMS': list(RMS),
+                'filename': fname
+        }
         print(data)
         print(json.dumps(data, sort_keys=True, indent=None),
               file=f,flush=True)
@@ -564,8 +569,8 @@ def optim_DIVAnd():
     print("search_result fun",search_result.fun)
 
 
-#optim_DIVAnd()
-optim_DINCAE()
+optim_DIVAnd()
+#optim_DINCAE()
 #regularization_L2_beta,ndepth,ksize_factor = (0.1, 4, 1.5)
 
 #check(regularization_L2_beta,ndepth,ksize_factor)
