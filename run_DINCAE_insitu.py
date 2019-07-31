@@ -60,7 +60,7 @@ fnametrain = os.path.join(basedir,"Temperature.train.nc")
 varname = "Salinity"
 varname = "Temperature"
 
-outdir = os.path.join(basedir,"Optimization-DIVAnd-1")
+outdir = os.path.join(basedir,"Optimization-DIVAnd-2")
 
 
 maskname = os.path.join(basedir,"mask.nc")
@@ -505,8 +505,8 @@ def optim_DINCAE():
     search_result = skopt.gp_minimize(
         func=DINCAE_fitness,
         dimensions=dimensions,
-        acq_func='EI', # Expected Improvement.
-        n_calls=30,
+        ##acq_func='EI', # Expected Improvement.
+        n_calls=100,
         x0=default_parameters)
 
     print("search_result ",search_result)
@@ -559,8 +559,8 @@ def optim_DIVAnd():
     search_result = skopt.gp_minimize(
         func=DIVAnd_fitness,
         dimensions=DIVAnd_dimensions,
-        acq_func='EI', # Expected Improvement.
-        n_calls=30,
+        #acq_func='EI', # Expected Improvement.
+        n_calls=100,
         x0=[150_000,1.])
 
     print("search_result ",search_result)
