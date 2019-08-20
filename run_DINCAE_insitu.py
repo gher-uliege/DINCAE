@@ -59,6 +59,7 @@ reconstruct_params = {
     #"regularization_L2_beta": 0.,
     "regularization_L2_beta": 0.05,
     "save_model_each": 0,
+    "frac_dense_layer": [],
 }
 
 # basedir should contain all the input data
@@ -588,11 +589,12 @@ def optim_DIVAnd():
     print("search_result fun",search_result.fun)
 
 
-if checkmethod == "DIVAnd":
-    optim_DIVAnd()
-else:
-    optim_DINCAE()
-#regularization_L2_beta,ndepth,ksize_factor = (0.1, 4, 1.5)
+# if checkmethod == "DIVAnd":
+#     optim_DIVAnd()
+# else:
+#     optim_DINCAE()
+
+regularization_L2_beta,ndepth,ksize_factor = (0.1, 4, 1.5)
 
 # regularization_L2_beta = 0.0007977075207819413
 # ndepth = 5
@@ -601,4 +603,4 @@ else:
 #check(regularization_L2_beta,ndepth,ksize_factor)
 
 
-#DINCAE_fitness([regularization_L2_beta,ndepth,ksize_factor])
+DINCAE_fitness([regularization_L2_beta,ndepth,ksize_factor])

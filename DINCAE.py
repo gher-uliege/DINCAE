@@ -31,7 +31,7 @@ The code is available at:
 """
 import os
 import random
-from math import ceil
+from math import ceil, floor
 from netCDF4 import Dataset, num2date
 import numpy as np
 import tensorflow as tf
@@ -295,6 +295,7 @@ def reconstruct(lon,lat,mask,meandata,
                 shuffle_buffer_size = 3*15,
                 nvar = 10,
                 enc_ksize_internal = [16,24,36,54],
+                frac_dense_layer = [0.2],
                 clip_grad = 5.0,
                 regularization_L2_beta = 0,
                 savesample = savesample
@@ -380,7 +381,8 @@ e.g. sea points for sea surface temperature.
 
 
 
-    # encoder
+    # Encoder
+
     enc_nlayers = len(enc_ksize)
     enc_conv = [None] * enc_nlayers
     enc_avgpool = [None] * enc_nlayers
@@ -404,26 +406,28 @@ e.g. sea points for sea surface temperature.
 
         enc_last = enc_avgpool[-1]
 
-    # Dense Layer
+    # Dense Layers
     ndensein = enc_last.shape[1:].num_elements()
 
     avgpool_flat = tf.reshape(enc_last, [-1, ndensein])
-    dense_units = [ndensein//5]
+
+    # number of output units for the dense layers
+    dense_units = [floor(ndensein*frac) for frac in frac_dense_layer + list(reversed(frac_dense_layer[:-1]))]
+    # last dense layer must give again the same number as input units
+    dense_units.append(ndensein)
 
     # default is no drop-out
     dropout_rate = tf.placeholder_with_default(0.0, shape=())
 
-    dense = [None] * 5
+    dense = [None] * (4*len(frac_dense_layer)+1)
     dense[0] = avgpool_flat
-    dense[1] = tf.layers.dense(inputs=dense[0],
-                               units=dense_units[0],
-                               activation=tf.nn.relu)
-    dense[2] = tf.layers.dropout(inputs=dense[1], rate=dropout_rate)
-    dense[3] = tf.layers.dense(inputs=dense[2],
-                               units=ndensein,
-                               activation=tf.nn.relu)
-    dense[4] = tf.layers.dropout(inputs=dense[3], rate=dropout_rate)
 
+    for i in range(2*len(frac_dense_layer)):
+        dense[2*i+1] = tf.layers.dense(inputs=dense[2*i],
+                                       units=dense_units[i],
+                                       activation=tf.nn.relu)
+        print("dense layer: output units: ",i,dense[2*i+1].shape)
+        dense[2*i+2] = tf.layers.dropout(inputs=dense[2*i+1], rate=dropout_rate)
 
     dense_2d = tf.reshape(dense[-1], tf.shape(enc_last))
 
