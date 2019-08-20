@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import sys
 import random
 import math
 from math import ceil
@@ -20,15 +21,22 @@ import shutil
 
 from multiprocessing import Pool
 
-from julia.api import Julia
-jl = Julia(compiled_modules=False)
-jl.eval('push!(LOAD_PATH,joinpath(ENV["HOME"],"projects/Julia/share"))')
-jl.eval('push!(LOAD_PATH,joinpath(ENV["HOME"],"src","CAE"))')
-from julia import dincae_insitu
+checkmethod = "DINCAE"
+#checkmethod = "DIVAnd"
+checkmethod = sys.argv[1]
+
+print("checkmethod ",checkmethod)
+if checkmethod == "DIVAnd":
+    from julia.api import Julia
+    jl = Julia(compiled_modules=False)
+    jl.eval('push!(LOAD_PATH,joinpath(ENV["HOME"],"projects/Julia/share"))')
+    jl.eval('push!(LOAD_PATH,joinpath(ENV["HOME"],"src","CAE"))')
+    from julia import dincae_insitu
 
 
 epochs = 5000*2
 epochs = 300
+#epochs = 50
 #epochs = 5
 #epochs = 1
 
@@ -60,7 +68,7 @@ fnametrain = os.path.join(basedir,"Temperature.train.nc")
 varname = "Salinity"
 varname = "Temperature"
 
-outdir = os.path.join(basedir,"Optimization-DIVAnd-2")
+outdir = os.path.join(basedir,"Optimization-" + checkmethod + "-decay-3")
 
 
 maskname = os.path.join(basedir,"mask.nc")
@@ -343,6 +351,13 @@ class Saver4D:
 
         root_grp.close()
 
+        # ntime = 12
+        # if offset + m_rec.shape[0] == len(self.depth) * ntime:
+        #     fnamecv = os.path.join(basedir,"Temperature.cv.nc")
+        #     RMS,totRMS = monthlyCVRMS_files(fname,fnamecv,self.varname)
+        #     print("cv totRMS ",totRMS)
+
+
 def monthlyCVRMS(lon,lat,depth,value,obsvalue,obslon,obslat,obsdepth,obstime):
     obsmonths = obstime.astype('datetime64[M]').astype(int) % 12
 
@@ -458,7 +473,7 @@ def check(regularization_L2_beta,ndepth,ksize_factor):
 
 
 dimensions = [
-    Real(low=1e-6, high=2., prior="log-uniform", name="regularization_L2_beta"),
+    Real(low=1e-6, high=1e-2, prior="log-uniform", name="regularization_L2_beta"),
     #Integer(low=2, high = 6, name = "ndepth"),
     Integer(low=4, high = 6, name = "ndepth"),
     #Real(low=1.1, high = 1.8, name = "ksize_factor")
@@ -500,13 +515,17 @@ def DINCAE_fitness(regularization_L2_beta,ndepth,ksize_factor):
     return totRMS
 
 def optim_DINCAE():
-    default_parameters = [0.1, 4, 1.5]
+    regularization_L2_beta = 1.0e-3
+    ndepth = 5
+    ksize_factor = 1.2544423914213654
+
+    default_parameters = [regularization_L2_beta,ndepth,ksize_factor]
 
     search_result = skopt.gp_minimize(
         func=DINCAE_fitness,
         dimensions=dimensions,
         ##acq_func='EI', # Expected Improvement.
-        n_calls=100,
+        n_calls=30,
         x0=default_parameters)
 
     print("search_result ",search_result)
@@ -569,10 +588,17 @@ def optim_DIVAnd():
     print("search_result fun",search_result.fun)
 
 
-optim_DIVAnd()
-#optim_DINCAE()
+if checkmethod == "DIVAnd":
+    optim_DIVAnd()
+else:
+    optim_DINCAE()
 #regularization_L2_beta,ndepth,ksize_factor = (0.1, 4, 1.5)
 
+# regularization_L2_beta = 0.0007977075207819413
+# ndepth = 5
+# ksize_factor = 1.2544423914213654
+
 #check(regularization_L2_beta,ndepth,ksize_factor)
+
 
 #DINCAE_fitness([regularization_L2_beta,ndepth,ksize_factor])

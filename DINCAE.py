@@ -526,15 +526,32 @@ e.g. sea points for sea surface temperature.
                 tf.reverse(tf.multiply(σ2_rec,mask_issea),[1]),-1))
 
     # parameters for Adam optimizer (default values)
-    learning_rate = 1e-3
+    #learning_rate = 1e-3
     beta1 = 0.9
     beta2 = 0.999
     epsilon = 1e-08
+
+    # global_step = tf.Variable(0, trainable=False)
+    # starter_learning_rate = 1e-3
+    # learning_rate = tf.train.exponential_decay(starter_learning_rate,
+    #                                                      global_step,
+    #                                                      50, 0.96, staircase=True)
+
+    learning_rate = tf.placeholder(tf.float32, shape=[])
 
     optimizer = tf.train.AdamOptimizer(learning_rate,beta1,beta2,epsilon)
     gradients, variables = zip(*optimizer.compute_gradients(cost))
     gradients, _ = tf.clip_by_global_norm(gradients, clip_grad)
     opt = optimizer.apply_gradients(zip(gradients, variables))
+
+    # Passing global_step to minimize() will increment it at each step.
+    # opt = (
+    #     tf.train.GradientDescentOptimizer(learning_rate)
+    #     .minimize(cost, global_step=global_step)
+    # )
+
+    # optimize = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost, global_step=global_step)
+
 
     dt_start = datetime.now()
     print(dt_start)
@@ -567,10 +584,11 @@ e.g. sea points for sea surface temperature.
 
             # run a single step of the optimizer
             #logger.debug(f'running {ii}')
-            summary, batch_cost, batch_RMS, bs, _ = sess.run(
-                [merged, cost, RMS, mask_noncloud, opt],feed_dict={
+            summary, batch_cost, batch_RMS, bs, batch_learning_rate, _ = sess.run(
+                [merged, cost, RMS, mask_noncloud, learning_rate, opt],feed_dict={
                     handle: train_iterator_handle,
                     mask_issea: mask,
+                    learning_rate: 1e-3 * (0.99 ** e),
                     dropout_rate: dropout_rate_train})
 
             #logger.debug('running done')
@@ -584,7 +602,7 @@ e.g. sea points for sea surface temperature.
             if ii % 1 == 0:
                 print("Epoch: {}/{}...".format(e+1, epochs),
                       "Training loss: {:.4f}".format(batch_cost),
-                      "RMS: {:.4f}".format(batch_RMS))
+                      "RMS: {:.4f}".format(batch_RMS), batch_learning_rate )
 
         if (e == epochs-1) or ((save_each > 0) and (e % save_each == 0)):
             print("Save output",e)
