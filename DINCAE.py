@@ -55,7 +55,7 @@ summaries to a Tensor graph (for TensorBoard visualization)
       tf.summary.histogram('histogram', var)
 
 
-def load_gridded_nc(fname,varname):
+def load_gridded_nc(fname,varname, minfrac = 0.05):
     """
 Load the variable `varname` from the NetCDF file `fname`. The variable `lon` is
 the longitude in degrees east, `lat` is the latitude in degrees North, `time` is
@@ -89,11 +89,21 @@ attributes:
     time = num2date(ds.variables["time"][:],ds.variables["time"].units);
 
     data = ds.variables[varname][:,:,:];
-    mask = ds.variables["mask"][:,:].data == 1;
+
+    if "mask" in ds.variables:
+        mask = ds.variables["mask"][:,:].data == 1;
+    else:
+        print("compute mask for ",varname,": sea point should have at least ",
+              minfrac," for valid data tought time")
+
+        mask = np.mean(~data.mask,axis=0) > minfrac
+
+        print("mask: sea points ",np.sum(mask))
+        print("mask: land points ",np.sum(~mask))
 
     ds.close()
     missing = data.mask
-
+    print("data ",data.shape)
     return lon,lat,time,data,missing,mask
 
 
@@ -101,6 +111,16 @@ def data_generator(lon,lat,time,data_full,missing,
                    train = True,
                    obs_err_std = 1.,
                    jitter_std = 0.05):
+
+    return data_generator_list(lon,lat,time,[data_full],[missing],
+                   train = True,
+                   obs_err_std = [obs_err_std],
+                   jitter_std = [jitter_std])
+
+def data_generator_list(lon,lat,time,data_full,missing,
+                   train = True,
+                   obs_err_std = [1.],
+                   jitter_std = [0.05]):
     """
 Return a generator for training (`train = True`) or testing (`train = False`)
 the neural network. `obs_err_std` is the error standard deviation of the
@@ -115,58 +135,71 @@ generator function returning a single image (relative to the mean `meandata`),
 `ntime` the number of time instances for training or testing and `meandata` is
 the temporal mean of the data.
 """
-    ntime = data_full.shape[0]
-
-    meandata = data_full.mean(axis=0,keepdims=True)
+    sz = data_full[0].shape
+    print("sz ",sz)
+    ntime = sz[0]
+    ndata = len(data_full)
 
     dayofyear = np.array([d.timetuple().tm_yday for d in time])
     dayofyear_cos = np.cos(dayofyear/365.25)
     dayofyear_sin = np.sin(dayofyear/365.25)
 
+    meandata = [None] * ndata
+    data = [None] * ndata
 
-    data = data_full - meandata
+    for i in range(ndata):
+        meandata[i] = data_full[i].mean(axis=0,keepdims=True)
+        data[i] = data_full[i] - meandata[i]
 
-    sz = data.shape
+        if data_full[i].shape != data_full[0].shape:
+            raise ArgumentError("shape are not coherent")
 
-    x = np.zeros((sz[0],sz[1],sz[2],6),dtype="float32")
+    # scaled mean and inverse of error variance for every input data
+    # plus lon, lat, cos(time) and sin(time)
+    x = np.zeros((sz[0],sz[1],sz[2],2*ndata + 4),dtype="float32")
 
-    x[:,:,:,1] = (1-data.mask) / (obs_err_std**2)  # error variance
-    x[:,:,:,0] = data.filled(0) / (obs_err_std**2)
+    for i in range(ndata):
+        x[:,:,:,2*i] = data[i].filled(0) / (obs_err_std[i]**2)
+        x[:,:,:,2*i+1] = (1-data[i].mask) / (obs_err_std[i]**2)  # error variance
 
     # scale between -1 and 1
     lon_scaled = 2 * (lon - np.min(lon)) / (np.max(lon) - np.min(lon)) - 1
     lat_scaled = 2 * (lat - np.min(lat)) / (np.max(lat) - np.min(lat)) - 1
 
-    x[:,:,:,2] = lon_scaled.reshape(1,1,len(lon))
-    x[:,:,:,3] = lat_scaled.reshape(1,len(lat),1)
-    x[:,:,:,4] = dayofyear_cos.reshape(len(dayofyear_cos),1,1)
-    x[:,:,:,5] = dayofyear_sin.reshape(len(dayofyear_sin),1,1)
+    i = 2*ndata
+    x[:,:,:,i  ] = lon_scaled.reshape(1,1,len(lon))
+    x[:,:,:,i+1] = lat_scaled.reshape(1,len(lat),1)
+    x[:,:,:,i+2] = dayofyear_cos.reshape(len(dayofyear_cos),1,1)
+    x[:,:,:,i+3] = dayofyear_sin.reshape(len(dayofyear_sin),1,1)
 
     # generator for data
     def datagen():
-        for i in range(data.shape[0]):
-            xin = np.zeros((sz[1],sz[2],6+2*2),dtype="float32")
-            xin[:,:,0:6]  = x[i,:,:,:]
-            xin[:,:,6:8]  = x[max(0,i-1),:,:,0:2] # previous
-            xin[:,:,8:10] = x[min(data.shape[0]-1,i+1),:,:,0:2] # next
+        for i in range(ntime):
+            xin = np.zeros((sz[1],sz[2],6*ndata + 4),dtype="float32")
+            xin[:,:,0:(2*ndata + 4)]  = x[i,:,:,:]
 
+            xin[:,:,(2*ndata + 4):(4*ndata + 4)] = x[max(0,i-1),:,:,0:(2*ndata)] # previous
+            xin[:,:,(4*ndata + 4):(6*ndata + 4)] = x[min(ntime-1,i+1),:,:,0:(2*ndata)] # next
 
             # add missing data during training randomly
             if train:
-                imask = random.randrange(0,missing.shape[0])
-                selmask = missing[imask,:,:]
+                #imask = random.randrange(0,missing.shape[0])
+                imask = random.randrange(0,ntime)
 
-                xin[:,:,0][selmask] = 0
-                xin[:,:,1][selmask] = 0
+                for j in range(ndata):
+                    selmask = missing[j][imask,:,:]
+                    xin[:,:,2*j][selmask] = 0
+                    xin[:,:,2*j+1][selmask] = 0
 
                 # add jitter
-                xin[:,:,0] = xin[:,:,0] + jitter_std * np.random.randn(sz[1],sz[2])
-                xin[:,:,6] = xin[:,:,6] + jitter_std * np.random.randn(sz[1],sz[2])
-                xin[:,:,8] = xin[:,:,8] + jitter_std * np.random.randn(sz[1],sz[2])
+                for j in range(ndata):
+                    xin[:,:,2*j] += jitter_std[j] * np.random.randn(sz[1],sz[2])
+                    xin[:,:,2*j + 2*ndata + 4] += jitter_std[j] * np.random.randn(sz[1],sz[2])
+                    xin[:,:,2*j + 4*ndata + 4] += jitter_std[j] * np.random.randn(sz[1],sz[2])
 
             yield (xin,x[i,:,:,0:2])
 
-    return datagen,data.shape[0],meandata
+    return datagen,ntime,meandata[0]
 
 
 def savesample_old(fname,batch_m_rec,batch_σ2_rec,meandata,lon,lat,e,ii,offset):

@@ -1,3 +1,5 @@
+using Dates, Printf
+
 lonr = [12,19]
 latr = [40,46];
 timer = [DateTime(2000,3,1),DateTime(2006,7,31)] # wind
@@ -48,5 +50,16 @@ function wind_url(dt)
     dd = Dates.format(dt,"dd")
 
     url = "http://data.remss.com/ccmp/v02.0/Y$(yyyy)/M$(mm)/CCMP_Wind_Analysis_$(yyyy)$(mm)$(dd)_V02.0_L3.0_RSS.nc"
+    return url
+end
+
+
+function modis_url(dt)
+    yyyy = Dates.format(dt,"yyyy")
+    doy = @sprintf("%03d",Dates.dayofyear(dt))
+
+    #url = "https://podaac-opendap.jpl.nasa.gov:443/opendap/allData/modis/L3/terra/11um/v2014.0/4km/daily/$yyyy/$doy/T$yyyy$doy.L3m_DAY_NSST_sst_4km.nc"
+    url = "/home/abarth/mnt/podaac/allData/modis/L3/terra/11um/v2014.0/4km/daily/$yyyy/$doy/T$yyyy$doy.L3m_DAY_NSST_sst_4km.nc"
+
     return url
 end
