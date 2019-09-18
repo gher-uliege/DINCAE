@@ -28,6 +28,11 @@ function target_grid(lonr,latr)
 
     lon_target = lon[irange];
     lat_target = lat[jrange];
+
+    if lat_target[1] > lat_target[2]
+        lat_target = reverse(lat_target)
+    end
+
     return lon_target,lat_target
 end
 

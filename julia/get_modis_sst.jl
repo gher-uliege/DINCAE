@@ -19,6 +19,7 @@ irange = rr(findall(lonr[1] .<= lon .<= lonr[end]));
 jrange = rr(findall(latr[1] .<= lat .<= latr[end]));
 close(ds)
 
+
 for n = 1:length(times)
 #for n = 1:2
 #for n = 950 .+ (0:1)
@@ -54,6 +55,10 @@ for n = 1:length(times)
             # depending on domain
             #lon = lon .- 360
 
+            if lat[1] > lat[2]
+                data = reverse(data,dims=2)
+                qual = reverse(qual,dims=2)
+            end
 
             close(ds)
         else

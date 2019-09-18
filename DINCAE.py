@@ -202,7 +202,7 @@ the temporal mean of the data.
     return datagen,ntime,meandata[0]
 
 
-def savesample_old(fname,batch_m_rec,batch_σ2_rec,meandata,lon,lat,e,ii,offset):
+def savesample_old_without_mean(fname,batch_m_rec,batch_σ2_rec,meandata,lon,lat,e,ii,offset):
     fill_value = -9999.
     recdata = batch_m_rec  # + meandata;
     batch_sigma_rec = np.sqrt(batch_σ2_rec)
@@ -251,9 +251,11 @@ def savesample_old(fname,batch_m_rec,batch_σ2_rec,meandata,lon,lat,e,ii,offset)
     root_grp.close()
 
 
-def savesample(fname,m_rec,σ2_rec,meandata,lon,lat,e,ii,offset):
+def savesample(fname,m_rec,σ2_rec,meandata,lon,lat,e,ii,offset,
+               transfun = (lambda x: x, lambda x: x)):
     fill_value = -9999.
-    recdata = m_rec  + meandata;
+    recdata = transfun[1](m_rec  + meandata)
+    # todo apply transfun to sigma_rec
     sigma_rec = np.sqrt(σ2_rec)
 
     if ii == 0:
@@ -291,6 +293,8 @@ def savesample(fname,m_rec,σ2_rec,meandata,lon,lat,e,ii,offset):
         nc_sigma_rec = root_grp.variables['sigma_rec']
 
     for n in range(m_rec.shape[0]):
+#        nc_mean_rec[n+offset,:,:] = np.ma.masked_array(
+#            recdata[n,:,:],meandata.mask)
         nc_mean_rec[n+offset,:,:] = np.ma.masked_array(
             recdata[n,:,:],meandata.mask)
         nc_sigma_rec[n+offset,:,:] = np.ma.masked_array(
@@ -322,7 +326,8 @@ def reconstruct(lon,lat,mask,meandata,
                 nvar = 10,
                 enc_ksize_internal = [16,24,36,54],
                 clip_grad = 5.0,
-                regularization_L2_beta = 0
+                regularization_L2_beta = 0,
+                transfun = (lambda x: x, lambda x: x)
 ):
     """
 Train a neural network to reconstruct missing data using the training data set
@@ -638,6 +643,7 @@ e.g. sea points for sea surface temperature.
 
 def reconstruct_gridded_nc(filename,varname,outdir,
                            jitter_std = 0.05,
+                           transfun = (lambda x: x, lambda x: x),
                            **kwargs):
     """
 Train a neural network to reconstruct missing data from the NetCDF variable
@@ -649,18 +655,23 @@ See `DINCAE.reconstruct` for other keyword arguments and
 
 """
     lon,lat,time,data,missing,mask = load_gridded_nc(filename,varname)
+
+    data_trans = transfun[0](data)
+
     train_datagen,train_len,meandata = data_generator(
-        lon,lat,time,data,missing,
+        lon,lat,time,data_trans,missing,
         jitter_std = jitter_std)
     test_datagen,test_len,test_meandata = data_generator(
-        lon,lat,time,data,missing,
+        lon,lat,time,data_trans,missing,
         train = False)
 
     reconstruct(
         lon,lat,mask,meandata,
         train_datagen,train_len,
         test_datagen,test_len,
-        outdir,**kwargs)
+        outdir,
+        transfun = transfun,
+        **kwargs)
 
 #  LocalWords:  DINCAE Convolutional MERCHANTABILITY gridded
 #  LocalWords:  TensorBoard stddev varname NetCDF fname lon numpy datetime
