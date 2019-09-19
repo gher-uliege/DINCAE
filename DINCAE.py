@@ -39,6 +39,11 @@ from datetime import datetime
 
 __all__ = ["reconstruct","load_gridded_nc","data_generator","reconstruct_gridded_nc"]
 
+
+def identity(x):
+    return x
+
+
 def variable_summaries(var):
     """
 Attach several diagnostics (mean, std. dev., ..) of the variable `var`
@@ -252,11 +257,20 @@ def savesample_old_without_mean(fname,batch_m_rec,batch_σ2_rec,meandata,lon,lat
 
 
 def savesample(fname,m_rec,σ2_rec,meandata,lon,lat,e,ii,offset,
-               transfun = (lambda x: x, lambda x: x)):
+               transfun = (identity, identity)):
     fill_value = -9999.
     recdata = transfun[1](m_rec  + meandata)
     # todo apply transfun to sigma_rec
-    sigma_rec = np.sqrt(σ2_rec)
+
+    if transfun[1] == np.exp:
+        # relative error
+        sigma_rec = recdata * np.sqrt(σ2_rec)
+    elif transfun[1] == identity:
+        sigma_rec = np.sqrt(σ2_rec)
+    else:
+        print("warning: sigma_rec is not transformed")
+        sigma_rec = np.sqrt(σ2_rec)
+
 
     if ii == 0:
         # create file
@@ -327,7 +341,7 @@ def reconstruct(lon,lat,mask,meandata,
                 enc_ksize_internal = [16,24,36,54],
                 clip_grad = 5.0,
                 regularization_L2_beta = 0,
-                transfun = (lambda x: x, lambda x: x)
+                transfun = (identity,identity)
 ):
     """
 Train a neural network to reconstruct missing data using the training data set
@@ -626,7 +640,7 @@ e.g. sea points for sea surface temperature.
                 # time instances already written
                 offset = ii*batch_size
                 savesample(fname,batch_m_rec,batch_σ2_rec,meandata,lon,lat,e,ii,
-                           offset)
+                           offset, transfun = transfun)
 
         if (save_model_each > 0) and (e % save_model_each == 0):
             save_path = saver.save(sess, os.path.join(
@@ -643,7 +657,7 @@ e.g. sea points for sea surface temperature.
 
 def reconstruct_gridded_nc(filename,varname,outdir,
                            jitter_std = 0.05,
-                           transfun = (lambda x: x, lambda x: x),
+                           transfun = (identity, identity),
                            **kwargs):
     """
 Train a neural network to reconstruct missing data from the NetCDF variable
