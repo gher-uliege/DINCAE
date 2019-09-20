@@ -264,7 +264,8 @@ def savesample(fname,m_rec,σ2_rec,meandata,lon,lat,e,ii,offset,
 
     if transfun[1] == np.exp:
         # relative error
-        sigma_rec = recdata * np.sqrt(σ2_rec)
+        #sigma_rec = recdata * np.sqrt(σ2_rec)
+        sigma_rec = np.sqrt(σ2_rec) # debug
     elif transfun[1] == identity:
         sigma_rec = np.sqrt(σ2_rec)
     else:
