@@ -101,13 +101,23 @@ attributes:
         print("compute mask for ",varname,": sea point should have at least ",
               minfrac," for valid data tought time")
 
-        mask = np.mean(~data.mask,axis=0) > minfrac
+        if np.isscalar(data.mask):
+            mask = np.ones((data.shape[1],data.shape[2]),dtype=np.bool)
+        else:
+            mask = np.mean(~data.mask,axis=0) > minfrac
+
 
         print("mask: sea points ",np.sum(mask))
         print("mask: land points ",np.sum(~mask))
 
+    print("varname ",varname,mask.shape)
     ds.close()
-    missing = data.mask
+
+    if np.isscalar(data.mask):
+        missing = np.zeros(data.shape,dtype=np.bool)
+    else:
+        missing = data.mask
+
     print("data ",data.shape)
     return lon,lat,time,data,missing,mask
 
@@ -686,6 +696,73 @@ See `DINCAE.reconstruct` for other keyword arguments and
         test_datagen,test_len,
         outdir,
         transfun = transfun,
+        **kwargs)
+
+
+
+def reconstruct_gridded_files(fields,outdir,
+                           jitter_std = 0.05,
+                           **kwargs):
+    """
+Train a neural network to reconstruct missing data from the NetCDF variable
+`varname` in the NetCDF file `filename`. Results are saved in the output
+directory `outdir`. `jitter_std` is the standard deviation of the noise to be
+added to the data during training.
+See `DINCAE.reconstruct` for other keyword arguments and
+`DINCAE.load_gridded_nc` for the NetCDF format.
+
+"""
+
+    data_full = [None] * len(fields)
+    missing = [None] * len(fields)
+    jitter_std = [None] * len(fields)
+    transfun = [None] * len(fields)
+    varnames = [None] * len(fields)
+    obs_err_std = [1] * len(fields) # value is irrelevant
+    lon = []
+    lat = []
+    time = []
+
+    for (i,field) in enumerate(fields):
+        transfun[i] = field["transfun"]
+        varnames[i] = field["varname"]
+
+        field["lon"],field["lat"],field["time"],field["data"],field["missing"],field["mask"] = load_gridded_nc(field["filename"],field["varname"])
+
+        data_full[i] = field["transfun"][0](field["data"])
+
+        print("typeof- ",type(field["data"]))
+        print("typeof ",type(data_full[i]))
+
+        missing[i] = field["missing"]
+        jitter_std[i] = field.get("jitter_std",0)
+
+    lon = fields[0]["lon"]
+    lat = fields[0]["lat"]
+    time = fields[0]["time"]
+    mask = fields[0]["mask"]
+
+    ndata = len(fields)
+    # 6 is 2 (mean/sigma^2 and 1/sigma2) * 3 (previous, current and next)
+    nvar = 6*ndata + 4
+
+    train_datagen,train_len,meandata = data_generator_list(
+        lon,lat,time,data_full,missing,
+        obs_err_std = obs_err_std,
+        jitter_std = jitter_std)
+    test_datagen,test_len,test_meandata = data_generator_list(
+        lon,lat,time,data_full,missing,
+        obs_err_std = obs_err_std,
+        train = False)
+
+
+    reconstruct(
+        lon,lat,mask,meandata,
+        train_datagen,train_len,
+        test_datagen,test_len,
+        outdir,
+        transfun = transfun[0],
+        nvar = nvar,
         **kwargs)
 
 #  LocalWords:  DINCAE Convolutional MERCHANTABILITY gridded

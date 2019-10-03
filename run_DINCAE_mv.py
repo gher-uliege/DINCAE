@@ -13,8 +13,8 @@ transfun = (np.log, np.exp)
 
 
 filename = "/media/abarth/03489298-6387-4283-a0f5-9e7152600acc/abarth/Data/DINCAE-multivariate/Adriatic2/modis_sst_revlat_add_clouds.nc"
-varname = "sst"
-outdir = "/media/abarth/03489298-6387-4283-a0f5-9e7152600acc/abarth/Data/DINCAE-multivariate/Adriatic2//test-sst/"
+varname = "sst_t"
+outdir = "/media/abarth/03489298-6387-4283-a0f5-9e7152600acc/abarth/Data/DINCAE-multivariate/Adriatic2//test-sst-t/"
 
 transfun = (DINCAE.identity, DINCAE.identity)
 
