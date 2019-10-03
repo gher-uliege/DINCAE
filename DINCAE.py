@@ -357,6 +357,8 @@ e.g. sea points for sea surface temperature.
     train_dataset = tf.data.Dataset.from_generator(
         train_datagen, (tf.float32,tf.float32),
         (tf.TensorShape([jmax,imax,nvar]),tf.TensorShape([jmax,imax,2]))).repeat().shuffle(shuffle_buffer_size).batch(batch_size)
+        #(tf.TensorShape([None,None,nvar]),tf.TensorShape([None,None,2]))).repeat().shuffle(shuffle_buffer_size).batch(batch_size)
+
     train_iterator = train_dataset.make_one_shot_iterator()
     train_iterator_handle = sess.run(train_iterator.string_handle())
 
@@ -406,30 +408,34 @@ e.g. sea points for sea surface temperature.
 
         enc_last = enc_avgpool[-1]
 
-    # Dense Layers
-    ndensein = enc_last.shape[1:].num_elements()
-
-    avgpool_flat = tf.reshape(enc_last, [-1, ndensein])
-
-    # number of output units for the dense layers
-    dense_units = [floor(ndensein*frac) for frac in frac_dense_layer + list(reversed(frac_dense_layer[:-1]))]
-    # last dense layer must give again the same number as input units
-    dense_units.append(ndensein)
-
     # default is no drop-out
     dropout_rate = tf.placeholder_with_default(0.0, shape=())
 
-    dense = [None] * (4*len(frac_dense_layer)+1)
-    dense[0] = avgpool_flat
+    if len(frac_dense_layer) == 0:
+        dense_2d = enc_last
+    else:
+        # Dense Layers
+        ndensein = enc_last.shape[1:].num_elements()
+        print("ndensein ",ndensein)
 
-    for i in range(2*len(frac_dense_layer)):
-        dense[2*i+1] = tf.layers.dense(inputs=dense[2*i],
-                                       units=dense_units[i],
-                                       activation=tf.nn.relu)
-        print("dense layer: output units: ",i,dense[2*i+1].shape)
-        dense[2*i+2] = tf.layers.dropout(inputs=dense[2*i+1], rate=dropout_rate)
+        avgpool_flat = tf.reshape(enc_last, [-1, ndensein])
 
-    dense_2d = tf.reshape(dense[-1], tf.shape(enc_last))
+        # number of output units for the dense layers
+        dense_units = [floor(ndensein*frac) for frac in frac_dense_layer + list(reversed(frac_dense_layer[:-1]))]
+        # last dense layer must give again the same number as input units
+        dense_units.append(ndensein)
+
+        dense = [None] * (4*len(frac_dense_layer)+1)
+        dense[0] = avgpool_flat
+
+        for i in range(2*len(frac_dense_layer)):
+            dense[2*i+1] = tf.layers.dense(inputs=dense[2*i],
+                                           units=dense_units[i],
+                                           activation=tf.nn.relu)
+            print("dense layer: output units: ",i,dense[2*i+1].shape)
+            dense[2*i+2] = tf.layers.dropout(inputs=dense[2*i+1], rate=dropout_rate)
+
+        dense_2d = tf.reshape(dense[-1], tf.shape(enc_last))
 
     ### Decoder
     dec_conv = [None] * enc_nlayers
@@ -439,9 +445,10 @@ e.g. sea points for sea surface temperature.
 
     for l in range(1,enc_nlayers):
         l2 = enc_nlayers-l
+
         dec_upsample[l] = tf.image.resize_images(
             dec_conv[l-1],
-            enc_conv[l2].shape[1:3],
+            tf.shape(enc_conv[l2])[1:3],
             method=resize_method)
         print("decoder: output size of upsample layer: ",l,dec_upsample[l].shape)
 

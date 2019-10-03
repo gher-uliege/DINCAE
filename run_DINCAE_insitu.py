@@ -5,7 +5,7 @@ import os
 import sys
 import random
 import math
-from math import ceil
+from math import ceil, sin, cos, pi
 from netCDF4 import Dataset, num2date
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,6 +13,7 @@ import tensorflow as tf
 from datetime import datetime
 import DINCAE
 import scipy
+from scipy.ndimage import rotate
 import skopt
 from skopt.space import Real, Integer
 from skopt.utils import use_named_args
@@ -23,7 +24,9 @@ from multiprocessing import Pool
 
 checkmethod = "DINCAE"
 #checkmethod = "DIVAnd"
-checkmethod = sys.argv[1]
+
+if len(sys.argv) > 1:
+    checkmethod = sys.argv[1]
 
 print("checkmethod ",checkmethod)
 if checkmethod == "DIVAnd":
@@ -50,7 +53,8 @@ reconstruct_params = {
     #"save_each": 100 * 2,
     #"save_each": 5,
     #"save_each": 20,
-    "save_each": 0,
+    "save_each": 10,
+    #"save_each": 0,
     "dropout_rate_train": 0.3,
     "shuffle_buffer_size": 120,
     #"shuffle_buffer_size": 12,
@@ -59,7 +63,7 @@ reconstruct_params = {
     #"regularization_L2_beta": 0.,
     "regularization_L2_beta": 0.05,
     "save_model_each": 0,
-    "frac_dense_layer": [],
+    "frac_dense_layer": [0.2],
 }
 
 # basedir should contain all the input data
@@ -69,7 +73,14 @@ fnametrain = os.path.join(basedir,"Temperature.train.nc")
 varname = "Salinity"
 varname = "Temperature"
 
-outdir = os.path.join(basedir,"Optimization-" + checkmethod + "-decay-3")
+outdir = os.path.join(basedir,"Optimization-" + checkmethod + "-no-dens")
+outdir = os.path.join(basedir,"Optimization-" + checkmethod + "-norot")
+outdir = os.path.join(basedir,"Optimization-" + checkmethod + "-norot-fc")
+outdir = os.path.join(basedir,"Optimization-" + checkmethod + "-norot-fc-replay")
+outdir = os.path.join(basedir,"Optimization-" + checkmethod + "-norot-nofc-morecnn")
+outdir = os.path.join(basedir,"Optimization-" + checkmethod + "-rot-fc")
+outdir = os.path.join(basedir,"Optimization-" + checkmethod + "-rot-fc-nodepth")
+outdir = os.path.join(basedir,"Optimization-" + checkmethod + "-rot-fc-biggaps")
 
 
 maskname = os.path.join(basedir,"mask.nc")
@@ -198,6 +209,10 @@ def dist(lon1,lat1,lon2,lat2):
 def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
                 train=True, jitter_std_lon = 0., jitter_std_lat = 0., jitter_std_value = 0.):
 
+    # initialize
+    if not hasattr(loadobsdata, 'count'):
+        loadobsdata.count = 0
+
     #nvar = 6
     nvar = 11
     #nvar = 7
@@ -210,6 +225,9 @@ def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
     nslices = ntime * len(depthr)
 
     def datagen():
+        if train:
+            loadobsdata.count += 1
+
         for month in range(1,ntime+1):
             sel = obsmonths == month
 
@@ -241,6 +259,8 @@ def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
                 x[:,:,2] = lon.reshape(1,len(lon))
                 x[:,:,3] = lat.reshape(len(lat),1)
                 x[:,:,4] = depthr[k]
+                #debug
+                #x[:,:,4] = depthr[k] * 0
                 x[:,:,5] = np.cos(2*math.pi * (month-1) / 12)
                 x[:,:,6] = np.sin(2*math.pi * (month-1) / 12)
 
@@ -270,7 +290,11 @@ def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
                 if train:
                     size_gap = 1.5
                     min_gap_count = 50
-                    cvtrain = 0.2
+                    # idea: start with a very large value (learn the large-scale) and the reduce
+                    #print("count ",loadobsdata.count)
+
+                    cvtrain = 0.9
+                    loadobsdata.count
                     selmask = np.random.rand(sz[0],sz[1]) < cvtrain
 
                     # while True:
@@ -286,7 +310,46 @@ def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
                     xin[:,:,0][selmask] = 0
                     xin[:,:,1][selmask] = 0
 
+                #random_rotation = True
+                random_rotation = False
+                if train and random_rotation:
+                    # random rotation
+                    angle = 0.1 * random.random()
+                    #angle = 20
+                    #print("angle ",angle)
+                    #print("range xin 1 ",xin.min(),xin.max())
+                    xin_bak = xin.copy()
+                    x_bak = x.copy()
+
+                    # xin_rotated = rotate(xin, angle, mode = "constant", cval = 0)
+                    # x_rotated = rotate(x[:,:,0:2], angle, mode = "constant", cval = 0)
+
+                    # xin = np.zeros((len(lat),len(lon),nvar),dtype = np.float32)
+                    # x = np.zeros((len(lat),len(lon),2),dtype = np.float32)
+
+                    # szr = (min(len(lat),x_rotated.shape[0]),
+                    #       min(len(lon),x_rotated.shape[1]))
+
+                    # xin[:szr[0],:szr[1],:] = xin_rotated[:szr[0],:szr[1],:]
+                    # x[:szr[0],:szr[1],:] = x_rotated[:szr[0],:szr[1],:]
+                    # xin[:,:,4:7] = xin_bak[:,:,4:7]
+                    # #print("range xin 2 ",xin.min(),xin.max())
+
+                    β  = angle*pi/180
+                    center_lon = lon.mean()
+                    center_lat = lat.mean()
+
+                    lonr = center_lon + cos(β) * (lon[np.newaxis,:] - center_lon) + sin(β) * (lat[:,np.newaxis] - center_lat)
+                    latr = center_lat - sin(β) * (lon[np.newaxis,:] - center_lon) + cos(β) * (lat[:,np.newaxis] - center_lat)
+                    xin = scipy.interpolate.interpn((lat,lon),xin,(latr,lonr),bounds_error = False, fill_value = 0);
+                    x = scipy.interpolate.interpn((lat,lon),x,(latr,lonr),bounds_error = False, fill_value = 0);
+                    xin[:,:,2] = lonr
+                    xin[:,:,3] = latr
+                    xin[:,:,4:7] = xin_bak[:,:,4:7]
+
                 yield (xin,x[:,:,0:2])
+
+
 
     return datagen,nslices,meandata,nvar
 
@@ -600,7 +663,32 @@ regularization_L2_beta,ndepth,ksize_factor = (0.1, 4, 1.5)
 # ndepth = 5
 # ksize_factor = 1.2544423914213654
 
-#check(regularization_L2_beta,ndepth,ksize_factor)
+ksize_factor = 1.5
+ndepth = 4
+regularization_L2_beta = 0.01
 
+#   fgrep data-2019-08-04T000042.nc DINCAE.jsonl
+# should be
+# "totRMS": 0.6856234996952447
 
-DINCAE_fitness([regularization_L2_beta,ndepth,ksize_factor])
+fname = check(regularization_L2_beta,ndepth,ksize_factor)
+fnamecv = os.path.join(basedir,"Temperature.cv.nc")
+varname = "Temperature"
+RMS,totRMS = monthlyCVRMS_files(fname,fnamecv,varname)
+
+print("RMS ",RMS)
+print("totRMS ",totRMS)
+
+#DINCAE_fitness([regularization_L2_beta,ndepth,ksize_factor])
+
+with open(os.path.join(outdir,"DINCAE.jsonl"),mode="a") as f:
+        data = {'totRMS': totRMS,
+                'regularization_L2_beta': regularization_L2_beta,
+                'ndepth': int(ndepth),
+                'ksize_factor': ksize_factor,
+                'RMS': list(RMS),
+                'filename': fname
+        }
+        print(data)
+        print(json.dumps(data, sort_keys=True, indent=None),
+              file=f,flush=True)
