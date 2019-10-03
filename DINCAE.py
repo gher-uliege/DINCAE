@@ -31,11 +31,18 @@ The code is available at:
 """
 import os
 import random
-from math import ceil
+from math import ceil, floor
 from netCDF4 import Dataset, num2date
 import numpy as np
 import tensorflow as tf
 from datetime import datetime
+import logging
+
+logger = logging.getLogger('root')
+FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
+logging.basicConfig(format=FORMAT)
+logger.setLevel(logging.DEBUG)
+
 
 __all__ = ["reconstruct","load_gridded_nc","data_generator","reconstruct_gridded_nc"]
 
@@ -350,9 +357,11 @@ def reconstruct(lon,lat,mask,meandata,
                 shuffle_buffer_size = 3*15,
                 nvar = 10,
                 enc_ksize_internal = [16,24,36,54],
+                frac_dense_layer = [0.2],
                 clip_grad = 5.0,
                 regularization_L2_beta = 0,
-                transfun = (identity,identity)
+                transfun = (identity,identity),
+                savesample = savesample
 ):
     """
 Train a neural network to reconstruct missing data using the training data set
@@ -395,6 +404,8 @@ e.g. sea points for sea surface temperature.
 
     print("regularization_L2_beta ",regularization_L2_beta)
     print("enc_ksize_internal ",enc_ksize_internal)
+    print("nvar ",nvar)
+
     enc_ksize = [nvar] + enc_ksize_internal
 
     if not os.path.isdir(outdir):
@@ -409,6 +420,8 @@ e.g. sea points for sea surface temperature.
     train_dataset = tf.data.Dataset.from_generator(
         train_datagen, (tf.float32,tf.float32),
         (tf.TensorShape([jmax,imax,nvar]),tf.TensorShape([jmax,imax,2]))).repeat().shuffle(shuffle_buffer_size).batch(batch_size)
+        #(tf.TensorShape([None,None,nvar]),tf.TensorShape([None,None,2]))).repeat().shuffle(shuffle_buffer_size).batch(batch_size)
+
     train_iterator = train_dataset.make_one_shot_iterator()
     train_iterator_handle = sess.run(train_iterator.string_handle())
 
@@ -433,7 +446,8 @@ e.g. sea points for sea surface temperature.
 
 
 
-    # encoder
+    # Encoder
+
     enc_nlayers = len(enc_ksize)
     enc_conv = [None] * enc_nlayers
     enc_avgpool = [None] * enc_nlayers
@@ -457,28 +471,34 @@ e.g. sea points for sea surface temperature.
 
         enc_last = enc_avgpool[-1]
 
-    # Dense Layer
-    ndensein = enc_last.shape[1:].num_elements()
-
-    avgpool_flat = tf.reshape(enc_last, [-1, ndensein])
-    dense_units = [ndensein//5]
-
     # default is no drop-out
     dropout_rate = tf.placeholder_with_default(0.0, shape=())
 
-    dense = [None] * 5
-    dense[0] = avgpool_flat
-    dense[1] = tf.layers.dense(inputs=dense[0],
-                               units=dense_units[0],
-                               activation=tf.nn.relu)
-    dense[2] = tf.layers.dropout(inputs=dense[1], rate=dropout_rate)
-    dense[3] = tf.layers.dense(inputs=dense[2],
-                               units=ndensein,
-                               activation=tf.nn.relu)
-    dense[4] = tf.layers.dropout(inputs=dense[3], rate=dropout_rate)
+    if len(frac_dense_layer) == 0:
+        dense_2d = enc_last
+    else:
+        # Dense Layers
+        ndensein = enc_last.shape[1:].num_elements()
+        print("ndensein ",ndensein)
 
+        avgpool_flat = tf.reshape(enc_last, [-1, ndensein])
 
-    dense_2d = tf.reshape(dense[-1], tf.shape(enc_last))
+        # number of output units for the dense layers
+        dense_units = [floor(ndensein*frac) for frac in frac_dense_layer + list(reversed(frac_dense_layer[:-1]))]
+        # last dense layer must give again the same number as input units
+        dense_units.append(ndensein)
+
+        dense = [None] * (4*len(frac_dense_layer)+1)
+        dense[0] = avgpool_flat
+
+        for i in range(2*len(frac_dense_layer)):
+            dense[2*i+1] = tf.layers.dense(inputs=dense[2*i],
+                                           units=dense_units[i],
+                                           activation=tf.nn.relu)
+            print("dense layer: output units: ",i,dense[2*i+1].shape)
+            dense[2*i+2] = tf.layers.dropout(inputs=dense[2*i+1], rate=dropout_rate)
+
+        dense_2d = tf.reshape(dense[-1], tf.shape(enc_last))
 
     ### Decoder
     dec_conv = [None] * enc_nlayers
@@ -488,9 +508,10 @@ e.g. sea points for sea surface temperature.
 
     for l in range(1,enc_nlayers):
         l2 = enc_nlayers-l
+
         dec_upsample[l] = tf.image.resize_images(
             dec_conv[l-1],
-            enc_conv[l2].shape[1:3],
+            tf.shape(enc_conv[l2])[1:3],
             method=resize_method)
         print("decoder: output size of upsample layer: ",l,dec_upsample[l].shape)
 
@@ -579,15 +600,32 @@ e.g. sea points for sea surface temperature.
                 tf.reverse(tf.multiply(σ2_rec,mask_issea),[1]),-1))
 
     # parameters for Adam optimizer (default values)
-    learning_rate = 1e-3
+    #learning_rate = 1e-3
     beta1 = 0.9
     beta2 = 0.999
     epsilon = 1e-08
+
+    # global_step = tf.Variable(0, trainable=False)
+    # starter_learning_rate = 1e-3
+    # learning_rate = tf.train.exponential_decay(starter_learning_rate,
+    #                                                      global_step,
+    #                                                      50, 0.96, staircase=True)
+
+    learning_rate = tf.placeholder(tf.float32, shape=[])
 
     optimizer = tf.train.AdamOptimizer(learning_rate,beta1,beta2,epsilon)
     gradients, variables = zip(*optimizer.compute_gradients(cost))
     gradients, _ = tf.clip_by_global_norm(gradients, clip_grad)
     opt = optimizer.apply_gradients(zip(gradients, variables))
+
+    # Passing global_step to minimize() will increment it at each step.
+    # opt = (
+    #     tf.train.GradientDescentOptimizer(learning_rate)
+    #     .minimize(cost, global_step=global_step)
+    # )
+
+    # optimize = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost, global_step=global_step)
+
 
     dt_start = datetime.now()
     print(dt_start)
@@ -603,7 +641,9 @@ e.g. sea points for sea surface temperature.
 
     index = 0
 
+    print("init")
     sess.run(tf.global_variables_initializer())
+    logger.debug('init done')
 
     saver = tf.train.Saver()
 
@@ -617,21 +657,26 @@ e.g. sea points for sea surface temperature.
         for ii in range(ceil(train_len / batch_size)):
 
             # run a single step of the optimizer
-            summary, batch_cost, batch_RMS, bs, _ = sess.run(
-                [merged, cost, RMS, mask_noncloud, opt],feed_dict={
+            #logger.debug(f'running {ii}')
+            summary, batch_cost, batch_RMS, bs, batch_learning_rate, _ = sess.run(
+                [merged, cost, RMS, mask_noncloud, learning_rate, opt],feed_dict={
                     handle: train_iterator_handle,
                     mask_issea: mask,
+                    learning_rate: 1e-3 * (0.99 ** e),
                     dropout_rate: dropout_rate_train})
+
+            #logger.debug('running done')
 
             if tensorboard:
                 train_writer.add_summary(summary, index)
 
             index += 1
 
-            if ii % 20 == 0:
+            #if ii % 20 == 0:
+            if ii % 1 == 0:
                 print("Epoch: {}/{}...".format(e+1, epochs),
                       "Training loss: {:.4f}".format(batch_cost),
-                      "RMS: {:.4f}".format(batch_RMS))
+                      "RMS: {:.4f}".format(batch_RMS), batch_learning_rate )
 
         if (e == epochs-1) or ((save_each > 0) and (e % save_each == 0)):
             print("Save output",e)
