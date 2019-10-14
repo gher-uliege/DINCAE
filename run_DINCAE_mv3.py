@@ -5,7 +5,7 @@ import DINCAE
 import numpy as np
 import os
 
-basedir = "/media/abarth/03489298-6387-4283-a0f5-9e7152600acc/abarth/Data/DINCAE-multivariate/Adriatic2/"
+basedir = os.path.expanduser("~/Data/DINCAE-multivariate/Adriatic2/")
 
 data = [
     {
