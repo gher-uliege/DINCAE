@@ -361,7 +361,9 @@ def reconstruct(lon,lat,mask,meandata,
                 clip_grad = 5.0,
                 regularization_L2_beta = 0,
                 transfun = (identity,identity),
-                savesample = savesample
+                savesample = savesample,
+                learning_rate = 1e-3,
+                learning_rate_decay_epoch = 100,
 ):
     """
 Train a neural network to reconstruct missing data using the training data set
@@ -400,6 +402,8 @@ e.g. sea points for sea surface temperature.
       (after the input convolutional layer)
  * `clip_grad`: clip gradient to a maximum L2-norm.
  * `regularization_L2_beta`: scalar to enforce L2 regularization on the weight
+ * `learning_rate`:  The initial learning rate
+ * `learning_rate_decay_epoch`: The exponential recay rate of the leaning rate. After `learning_rate_decay_epoch` the learning rate is halved. The learning rate is compute as  `learning_rate * 0.5^(epoch / learning_rate_decay_epoch)`. `learning_rate_decay_epoch` can be `numpy.inf` for a constant learning rate
 """
 
     print("regularization_L2_beta ",regularization_L2_beta)
@@ -611,9 +615,9 @@ e.g. sea points for sea surface temperature.
     #                                                      global_step,
     #                                                      50, 0.96, staircase=True)
 
-    learning_rate = tf.placeholder(tf.float32, shape=[])
+    learning_rate_ = tf.placeholder(tf.float32, shape=[])
 
-    optimizer = tf.train.AdamOptimizer(learning_rate,beta1,beta2,epsilon)
+    optimizer = tf.train.AdamOptimizer(learning_rate_,beta1,beta2,epsilon)
     gradients, variables = zip(*optimizer.compute_gradients(cost))
     gradients, _ = tf.clip_by_global_norm(gradients, clip_grad)
     opt = optimizer.apply_gradients(zip(gradients, variables))
@@ -659,10 +663,10 @@ e.g. sea points for sea surface temperature.
             # run a single step of the optimizer
             #logger.debug(f'running {ii}')
             summary, batch_cost, batch_RMS, bs, batch_learning_rate, _ = sess.run(
-                [merged, cost, RMS, mask_noncloud, learning_rate, opt],feed_dict={
+                [merged, cost, RMS, mask_noncloud, learning_rate_, opt],feed_dict={
                     handle: train_iterator_handle,
                     mask_issea: mask,
-                    learning_rate: 1e-3 * (0.99 ** e),
+                    learning_rate_: learning_rate * (0.5 ** (e / learning_rate_decay_epoch)),
                     dropout_rate: dropout_rate_train})
 
             #logger.debug('running done')
