@@ -15,9 +15,9 @@ data = [
     },
     {
 
-        "filename": os.path.join(basedir,"color_revlat.nc"),
+        "filename": os.path.join(basedir,"color_revlat_log.nc"),
         "varname": "chlor_a",
-        "transfun": (np.log, np.exp),
+        "transfun": (DINCAE.identity, DINCAE.identity)
     },
     {
         "filename": os.path.join(basedir,"CCMP_Wind_Analysis_Adriatic_revlat.nc"),
@@ -31,8 +31,8 @@ data = [
     },
     ]
 
-outdir = os.path.join(basedir,"test-sst-chlor_a-wind-2-decay-lr-10val")
+outdir = os.path.join(basedir,"test-sst-chlor_a-log-wind-2-decay-lr200-10val")
 
 DINCAE.reconstruct_gridded_files(
     data,outdir,
-    learning_rate_decay_epoch = 68.9)
+    learning_rate_decay_epoch = 200)
