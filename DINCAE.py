@@ -773,12 +773,12 @@ See `DINCAE.reconstruct` for other keyword arguments and
     time = []
 
     for (i,field) in enumerate(fields):
-        transfun[i] = field["transfun"]
+        transfun[i] = field.get("transfun",(identity,identity))
         varnames[i] = field["varname"]
 
         field["lon"],field["lat"],field["time"],field["data"],field["missing"],field["mask"] = load_gridded_nc(field["filename"],field["varname"])
 
-        data_full[i] = field["transfun"][0](field["data"])
+        data_full[i] = transfun[i][0](field["data"])
 
         print("typeof- ",type(field["data"]))
         print("typeof ",type(data_full[i]))
@@ -805,7 +805,7 @@ See `DINCAE.reconstruct` for other keyword arguments and
         train = False)
 
 
-    reconstruct(
+    fname = reconstruct(
         lon,lat,mask,meandata,
         train_datagen,train_len,
         test_datagen,test_len,
@@ -813,6 +813,8 @@ See `DINCAE.reconstruct` for other keyword arguments and
         transfun = transfun[0],
         nvar = nvar,
         **kwargs)
+
+    return fname
 
 #  LocalWords:  DINCAE Convolutional MERCHANTABILITY gridded
 #  LocalWords:  TensorBoard stddev varname NetCDF fname lon numpy datetime
