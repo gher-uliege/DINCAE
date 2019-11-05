@@ -125,7 +125,7 @@ attributes:
     else:
         missing = data.mask
 
-    print("data ",data.shape)
+    print("data shape, range",data.shape,data.min(),data.max())
     return lon,lat,time,data,missing,mask
 
 
