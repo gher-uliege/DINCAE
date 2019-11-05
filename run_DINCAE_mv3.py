@@ -25,6 +25,13 @@ data = [
         "filename": os.path.join(basedir,"color_revlat_log.nc"),
         "varname": "chlor_a",
     },
+
+    {
+
+        "filename": os.path.join(basedir,"CCMP_Wind_Analysis_Adriatic_revlat_speed_filtered.nc"),
+        "varname": "wind_speed",
+    },
+
     {
         "filename": os.path.join(basedir,"CCMP_Wind_Analysis_Adriatic_revlat.nc"),
         "varname":  "uwnd",
@@ -42,14 +49,14 @@ kwargs = {
 }
 
 
-#for data_case in [data[0:1],data]:
+for data_case in [data[0:1],data[0:2],data[0:3],data]:
 #for data_case in [data]:
-for data_case in [data[0:2]]:
+#for data_case in [data[0:2]]:
     with Pool(1) as p:
         import DINCAE
         outdir = os.path.join(basedir, "-".join([d["varname"] for d in data_case]) + "-" + ("-".join([k+str(v) for (k,v) in kwargs.items()])))
         print("outdir ",outdir)
-        fname = p.apply(DINCAE.reconstruct_gridded_files,(data,outdir),kwargs)
+        fname = p.apply(DINCAE.reconstruct_gridded_files,(data_case,outdir),kwargs)
         print("reconstruction done ")
 
 
