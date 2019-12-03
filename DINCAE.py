@@ -136,7 +136,7 @@ the temporal mean of the data.
     sz = data.shape
 
     # number of time instances, must be odd
-    ntime = 3
+    ntime_win = 5
     x = np.zeros((sz[0],sz[1],sz[2],6),dtype="float32")
 
     x[:,:,:,1] = (1-data.mask) / (obs_err_std**2)  # error variance
@@ -151,15 +151,17 @@ the temporal mean of the data.
     x[:,:,:,4] = dayofyear_cos.reshape(len(dayofyear_cos),1,1)
     x[:,:,:,5] = dayofyear_sin.reshape(len(dayofyear_sin),1,1)
 
+    nvar = 6+2*(ntime_win-1)
+
     # generator for data
     def datagen():
         for i in range(data.shape[0]):
-            xin = np.zeros((sz[1],sz[2],6+2*(ntime-1)),dtype="float32")
+            xin = np.zeros((sz[1],sz[2],nvar),dtype="float32")
             xin[:,:,0:6]  = x[i,:,:,:]
 
-            for time_index in range(0,ntime):
+            for time_index in range(0,ntime_win):
                 # nn is centered on the current time, e.g. -1 (past), 0 (present), 1 (future)
-                nn = time_index - (ntime//2)
+                nn = time_index - (ntime_win//2)
                 # current time is already included, skip it
                 if nn != 0:
                     i_clamped = min(data.shape[0]-1,max(0,i+nn))
@@ -181,7 +183,7 @@ the temporal mean of the data.
 
             yield (xin,x[i,:,:,0:2])
 
-    return datagen,data.shape[0],meandata
+    return datagen,nvar,data.shape[0],meandata
 
 
 def savesample_old(fname,batch_m_rec,batch_σ2_rec,meandata,lon,lat,e,ii,offset):
@@ -669,10 +671,10 @@ See `DINCAE.reconstruct` for other keyword arguments and
 
 """
     lon,lat,time,data,missing,mask = load_gridded_nc(filename,varname)
-    train_datagen,train_len,meandata = data_generator(
+    train_datagen,nvar,train_len,meandata = data_generator(
         lon,lat,time,data,missing,
         jitter_std = jitter_std)
-    test_datagen,test_len,test_meandata = data_generator(
+    test_datagen,nvar,test_len,test_meandata = data_generator(
         lon,lat,time,data,missing,
         train = False)
 
@@ -680,7 +682,7 @@ See `DINCAE.reconstruct` for other keyword arguments and
         lon,lat,mask,meandata,
         train_datagen,train_len,
         test_datagen,test_len,
-        outdir,**kwargs)
+        outdir, nvar = nvar, **kwargs)
 
 #  LocalWords:  DINCAE Convolutional MERCHANTABILITY gridded
 #  LocalWords:  TensorBoard stddev varname NetCDF fname lon numpy datetime
