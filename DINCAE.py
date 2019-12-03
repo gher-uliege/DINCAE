@@ -135,6 +135,8 @@ the temporal mean of the data.
 
     sz = data.shape
 
+    # number of time instances, must be odd
+    ntime = 3
     x = np.zeros((sz[0],sz[1],sz[2],6),dtype="float32")
 
     x[:,:,:,1] = (1-data.mask) / (obs_err_std**2)  # error variance
@@ -152,10 +154,16 @@ the temporal mean of the data.
     # generator for data
     def datagen():
         for i in range(data.shape[0]):
-            xin = np.zeros((sz[1],sz[2],6+2*2),dtype="float32")
+            xin = np.zeros((sz[1],sz[2],6+2*(ntime-1)),dtype="float32")
             xin[:,:,0:6]  = x[i,:,:,:]
-            xin[:,:,6:8]  = x[max(0,i-1),:,:,0:2] # previous
-            xin[:,:,8:10] = x[min(data.shape[0]-1,i+1),:,:,0:2] # next
+
+            for time_index in range(0,ntime):
+                # nn is centered on the current time, e.g. -1 (past), 0 (present), 1 (future)
+                nn = time_index - (ntime//2)
+                # current time is already included, skip it
+                if nn != 0:
+                    i_clamped = min(data.shape[0]-1,max(0,i+nn))
+                    xin[:,:,(6+time_index):(8+time_index)] = x[i_clamped,:,:,0:2]
 
 
             # add missing data during training randomly
