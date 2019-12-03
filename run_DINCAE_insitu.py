@@ -351,7 +351,7 @@ def loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,
 
 
 
-    return datagen,nslices,meandata,nvar
+    return datagen,nvar,nslices,meandata
 
 class Saver4D:
     def __init__(self,depth,mask,varname):
@@ -509,14 +509,14 @@ def check(regularization_L2_beta,ndepth,ksize_factor):
 
     obsvalue,obslon,obslat,obsdepth,obstime = loadobs(fnametrain,varname)
 
-    train_datagen,train_len,meandata,nvar = loadobsdata(
+    train_datagen,nvar,train_len,meandata = loadobsdata(
         obsvalue,obslon,obslat,obsdepth,obstime,
         train = True,
         jitter_std_lon = jitter_std_lon,
         jitter_std_lat = jitter_std_lat,
         jitter_std_value = jitter_std_value)
 
-    test_datagen,test_len,meandata_test,nvar_test = loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,train = False)
+    test_datagen,nvar_test,test_len,meandata_test = loadobsdata(obsvalue,obslon,obslat,obsdepth,obstime,train = False)
 
     #mask = meandata.mask
 
