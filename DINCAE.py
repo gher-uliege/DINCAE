@@ -240,7 +240,8 @@ def reconstruct(lon,lat,mask,meandata,
                 nvar = 10,
                 enc_ksize_internal = [16,24,36,54],
                 clip_grad = 5.0,
-                regularization_L2_beta = 0
+                regularization_L2_beta = 0,
+                iseed = None
 ):
     """
 Train a neural network to reconstruct missing data using the training data set
@@ -280,6 +281,11 @@ e.g. sea points for sea surface temperature.
  * `clip_grad`: clip gradient to a maximum L2-norm.
  * `regularization_L2_beta`: scalar to enforce L2 regularization on the weight
 """
+
+    if iseed != None:
+        np.random.seed(iseed)
+        tf.set_random_seed(np.random.randint(0,2**32-1))
+        random.seed(np.random.randint(0,2**32-1))
 
     print("regularization_L2_beta ",regularization_L2_beta)
     print("enc_ksize_internal ",enc_ksize_internal)
@@ -566,6 +572,7 @@ See `DINCAE.reconstruct` for other keyword arguments and
 `DINCAE.load_gridded_nc` for the NetCDF format.
 
 """
+
     lon,lat,time,data,missing,mask = load_gridded_nc(filename,varname)
     train_datagen,train_len,meandata = data_generator(
         lon,lat,time,data,missing,
