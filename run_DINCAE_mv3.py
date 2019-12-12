@@ -44,8 +44,8 @@ data = [
 
 
 kwargs = {
-    "epochs": 400,
-    "learning_rate_decay_epoch": 75,
+    "epochs": 1600,
+    "learning_rate_decay_epoch": 300,
 }
 
 
