@@ -465,7 +465,7 @@ e.g. sea points for sea surface temperature.
 
         dec_upsample[l] = tf.image.resize_images(
             dec_conv[l-1],
-            tf.shape(enc_conv[l2])[1:3],
+            enc_conv[l2].shape[1:3],
             method=resize_method)
         print("decoder: output size of upsample layer: ",l,dec_upsample[l].shape)
 
