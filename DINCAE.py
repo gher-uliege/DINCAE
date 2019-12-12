@@ -211,7 +211,7 @@ the temporal mean of the data.
                 nn = time_index - (ntime_win//2)
                 # current time is already included, skip it
                 if nn != 0:
-                    i_clamped = min(data.shape[0]-1,max(0,i+nn))
+                    i_clamped = min(ntime-1,max(0,i+nn))
                     xin[:,:,ioffset:(ioffset + 2*ndata)] = x[i_clamped,:,:,0:(2*ndata)]
                     ioffset = ioffset + 2*ndata
 
@@ -378,6 +378,7 @@ def reconstruct(lon,lat,mask,meandata,
                 learning_rate = 1e-3,
                 learning_rate_decay_epoch = 100,
                 iseed = None,
+                nprefectch = 0,
 ):
     """
 Train a neural network to reconstruct missing data using the training data set
@@ -443,8 +444,7 @@ e.g. sea points for sea surface temperature.
     # training dataset iterator
     train_dataset = tf.data.Dataset.from_generator(
         train_datagen, (tf.float32,tf.float32),
-        (tf.TensorShape([jmax,imax,nvar]),tf.TensorShape([jmax,imax,2]))).repeat().shuffle(shuffle_buffer_size).batch(batch_size).prefetch(1)
-        #(tf.TensorShape([None,None,nvar]),tf.TensorShape([None,None,2]))).repeat().shuffle(shuffle_buffer_size).batch(batch_size)
+        (tf.TensorShape([jmax,imax,nvar]),tf.TensorShape([jmax,imax,2]))).repeat().shuffle(shuffle_buffer_size).batch(batch_size)
 
     train_iterator = train_dataset.make_one_shot_iterator()
     train_iterator_handle = sess.run(train_iterator.string_handle())
@@ -453,7 +453,11 @@ e.g. sea points for sea surface temperature.
     # must be reinitializable
     test_dataset = tf.data.Dataset.from_generator(
         test_datagen, (tf.float32,tf.float32),
-        (tf.TensorShape([jmax,imax,nvar]),tf.TensorShape([jmax,imax,2]))).batch(batch_size).prefetch(1)
+        (tf.TensorShape([jmax,imax,nvar]),tf.TensorShape([jmax,imax,2]))).batch(batch_size)
+
+    if nprefectch > 0:
+        train_dataset = train_dataset.prefetch(nprefectch)
+        test_dataset = test_dataset.prefetch(nprefectch)
 
     test_iterator = tf.data.Iterator.from_structure(test_dataset.output_types,
                                                     test_dataset.output_shapes)
