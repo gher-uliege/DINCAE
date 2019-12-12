@@ -629,8 +629,8 @@ e.g. sea points for sea surface temperature.
             #if ii % 20 == 0:
             if ii % 1 == 0:
                 print("Epoch: {}/{}...".format(e+1, epochs),
-                      "Training loss: {:.4f}".format(batch_cost),
-                      "RMS: {:.4f}".format(batch_RMS), batch_learning_rate )
+                      "Training loss: {:.20f}".format(batch_cost),
+                      "RMS: {:.20f}".format(batch_RMS), batch_learning_rate )
 
         if (e == epochs-1) or ((save_each > 0) and (e % save_each == 0)):
             print("Save output",e)
