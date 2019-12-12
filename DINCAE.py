@@ -176,6 +176,9 @@ the temporal mean of the data.
         if data_full[i].shape != data_full[0].shape:
             raise ArgumentError("shape are not coherent")
 
+    # number of time instances, must be odd
+    ntime_win = 3
+
     # scaled mean and inverse of error variance for every input data
     # plus lon, lat, cos(time) and sin(time)
     x = np.zeros((sz[0],sz[1],sz[2],2*ndata + 4),dtype="float32")
@@ -194,14 +197,23 @@ the temporal mean of the data.
     x[:,:,:,i+2] = dayofyear_cos.reshape(len(dayofyear_cos),1,1)
     x[:,:,:,i+3] = dayofyear_sin.reshape(len(dayofyear_sin),1,1)
 
+    nvar = 2 * ntime_win * ndata + 4
+
     # generator for data
     def datagen():
         for i in range(ntime):
-            xin = np.zeros((sz[1],sz[2],6*ndata + 4),dtype="float32")
+            xin = np.zeros((sz[1],sz[2],nvar),dtype="float32")
             xin[:,:,0:(2*ndata + 4)]  = x[i,:,:,:]
 
-            xin[:,:,(2*ndata + 4):(4*ndata + 4)] = x[max(0,i-1),:,:,0:(2*ndata)] # previous
-            xin[:,:,(4*ndata + 4):(6*ndata + 4)] = x[min(ntime-1,i+1),:,:,0:(2*ndata)] # next
+            ioffset = (2*ndata + 4)
+            for time_index in range(0,ntime_win):
+                # nn is centered on the current time, e.g. -1 (past), 0 (present), 1 (future)
+                nn = time_index - (ntime_win//2)
+                # current time is already included, skip it
+                if nn != 0:
+                    i_clamped = min(data.shape[0]-1,max(0,i+nn))
+                    xin[:,:,ioffset:(ioffset + 2*ndata)] = x[i_clamped,:,:,0:(2*ndata)]
+                    ioffset = ioffset + 2*ndata
 
             # add missing data during training randomly
             if train:
@@ -221,7 +233,8 @@ the temporal mean of the data.
 
             yield (xin,x[i,:,:,0:2])
 
-    return datagen,ntime,meandata[0]
+    # meandata[0] is the primary variable to be reconstructed
+    return datagen,nvar,ntime,meandata[0]
 
 
 def savesample_old_without_mean(fname,batch_m_rec,batch_σ2_rec,meandata,lon,lat,e,ii,offset):
@@ -364,6 +377,7 @@ def reconstruct(lon,lat,mask,meandata,
                 savesample = savesample,
                 learning_rate = 1e-3,
                 learning_rate_decay_epoch = 100,
+                iseed = None,
 ):
     """
 Train a neural network to reconstruct missing data using the training data set
@@ -405,6 +419,12 @@ e.g. sea points for sea surface temperature.
  * `learning_rate`:  The initial learning rate
  * `learning_rate_decay_epoch`: The exponential recay rate of the leaning rate. After `learning_rate_decay_epoch` the learning rate is halved. The learning rate is compute as  `learning_rate * 0.5^(epoch / learning_rate_decay_epoch)`. `learning_rate_decay_epoch` can be `numpy.inf` for a constant learning rate
 """
+
+
+    if iseed != None:
+        np.random.seed(iseed)
+        tf.set_random_seed(np.random.randint(0,2**32-1))
+        random.seed(np.random.randint(0,2**32-1))
 
     print("regularization_L2_beta ",regularization_L2_beta)
     print("enc_ksize_internal ",enc_ksize_internal)
@@ -515,7 +535,7 @@ e.g. sea points for sea surface temperature.
 
         dec_upsample[l] = tf.image.resize_images(
             dec_conv[l-1],
-            tf.shape(enc_conv[l2])[1:3],
+            enc_conv[l2].shape[1:3],
             method=resize_method)
         print("decoder: output size of upsample layer: ",l,dec_upsample[l].shape)
 
@@ -676,11 +696,11 @@ e.g. sea points for sea surface temperature.
 
             index += 1
 
-            #if ii % 20 == 0:
-            if ii % 1 == 0:
+            if ii % 20 == 0:
+            #if ii % 1 == 0:
                 print("Epoch: {}/{}...".format(e+1, epochs),
-                      "Training loss: {:.4f}".format(batch_cost),
-                      "RMS: {:.4f}".format(batch_RMS), batch_learning_rate )
+                      "Training loss: {:.20f}".format(batch_cost),
+                      "RMS: {:.20f}".format(batch_RMS), batch_learning_rate )
 
         if (e == epochs-1) or ((save_each > 0) and (e % save_each == 0)):
             print("Save output",e)
@@ -728,15 +748,15 @@ See `DINCAE.reconstruct` for other keyword arguments and
 `DINCAE.load_gridded_nc` for the NetCDF format.
 
 """
-    lon,lat,time,data,missing,mask = load_gridded_nc(filename,varname)
 
+    lon,lat,time,data,missing,mask = load_gridded_nc(filename,varname)
     data_trans = transfun[0](data)
 
-    train_datagen,train_len,meandata = data_generator(
-        lon,lat,time,data_trans,missing,
+    train_datagen,nvar,train_len,meandata = data_generator(
+        lon,lat,time,data,missing,
         jitter_std = jitter_std)
-    test_datagen,test_len,test_meandata = data_generator(
-        lon,lat,time,data_trans,missing,
+    test_datagen,nvar,test_len,test_meandata = data_generator(
+        lon,lat,time,data,missing,
         train = False)
 
     reconstruct(
