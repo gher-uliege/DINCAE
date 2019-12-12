@@ -423,7 +423,7 @@ e.g. sea points for sea surface temperature.
     # training dataset iterator
     train_dataset = tf.data.Dataset.from_generator(
         train_datagen, (tf.float32,tf.float32),
-        (tf.TensorShape([jmax,imax,nvar]),tf.TensorShape([jmax,imax,2]))).repeat().shuffle(shuffle_buffer_size).batch(batch_size)
+        (tf.TensorShape([jmax,imax,nvar]),tf.TensorShape([jmax,imax,2]))).repeat().shuffle(shuffle_buffer_size).batch(batch_size).prefetch(1)
         #(tf.TensorShape([None,None,nvar]),tf.TensorShape([None,None,2]))).repeat().shuffle(shuffle_buffer_size).batch(batch_size)
 
     train_iterator = train_dataset.make_one_shot_iterator()
@@ -433,7 +433,7 @@ e.g. sea points for sea surface temperature.
     # must be reinitializable
     test_dataset = tf.data.Dataset.from_generator(
         test_datagen, (tf.float32,tf.float32),
-        (tf.TensorShape([jmax,imax,nvar]),tf.TensorShape([jmax,imax,2]))).batch(batch_size)
+        (tf.TensorShape([jmax,imax,nvar]),tf.TensorShape([jmax,imax,2]))).batch(batch_size).prefetch(1)
 
     test_iterator = tf.data.Iterator.from_structure(test_dataset.output_types,
                                                     test_dataset.output_shapes)
