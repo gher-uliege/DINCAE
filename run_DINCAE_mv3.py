@@ -46,6 +46,7 @@ data = [
 kwargs = {
     "epochs": 1600,
     "learning_rate_decay_epoch": 300,
+    "iseed": 12345,
 }
 
 
