@@ -774,7 +774,6 @@ See `DINCAE.reconstruct` for other keyword arguments and
 
 
 def reconstruct_gridded_files(fields,outdir,
-                           jitter_std = 0.05,
                            **kwargs):
     """
 Train a neural network to reconstruct missing data from the NetCDF variable
@@ -819,11 +818,11 @@ See `DINCAE.reconstruct` for other keyword arguments and
     # 6 is 2 (mean/sigma^2 and 1/sigma2) * 3 (previous, current and next)
     nvar = 6*ndata + 4
 
-    train_datagen,train_len,meandata = data_generator_list(
+    train_datagen,nvar,train_len,meandata = data_generator_list(
         lon,lat,time,data_full,missing,
         obs_err_std = obs_err_std,
         jitter_std = jitter_std)
-    test_datagen,test_len,test_meandata = data_generator_list(
+    test_datagen,nvar,test_len,test_meandata = data_generator_list(
         lon,lat,time,data_full,missing,
         obs_err_std = obs_err_std,
         train = False)
