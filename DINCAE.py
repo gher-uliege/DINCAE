@@ -136,7 +136,7 @@ the temporal mean of the data.
     sz = data.shape
 
     # number of time instances, must be odd
-    ntime_win = 5
+    ntime_win = 3
     x = np.zeros((sz[0],sz[1],sz[2],6),dtype="float32")
 
     x[:,:,:,1] = (1-data.mask) / (obs_err_std**2)  # error variance
