@@ -10,15 +10,19 @@ resize_method = tf.image.ResizeMethod.NEAREST_NEIGHBOR
 
 filename = os.path.expanduser("~/tmp/Data/Med/AVHRR/Data/avhrr_sub_add_clouds.nc")
 varname = "SST"
-outdir = os.path.expanduser("~/tmp/Data/Med/AVHRR/Fig-jitter-more-skip-avg-pool-nn-mv")
+outdir = os.path.expanduser("~/tmp/Data/Med/AVHRR/Fig-jitter-more-skip-avg-pool-keep20")
+
 
 iseed = 12345
-epochs = 1
+nprefectch = 1
 loss = []
 
 DINCAE.reconstruct_gridded_nc(filename,varname,outdir,
                               resize_method = resize_method,
                               iseed = iseed,
-                              epochs = epochs,
-                              save_each = -10000000000
+                              nprefectch = nprefectch,
+                              loss = loss,
 )
+
+for l in loss:
+    print("loss ",l)

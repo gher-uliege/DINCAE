@@ -687,6 +687,8 @@ e.g. sea points for sea surface temperature.
 
     # loop over epochs
     for e in range(epochs):
+        # use same clouds for every 20 epochs
+        random.seed(12345 + e//20)
 
         # loop over training datasets
         for ii in range(ceil(train_len / batch_size)):
