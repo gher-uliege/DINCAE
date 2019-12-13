@@ -131,16 +131,19 @@ attributes:
 
 def data_generator(lon,lat,time,data_full,missing,
                    train = True,
+                   ntime_win = 3,
                    obs_err_std = 1.,
                    jitter_std = 0.05):
 
     return data_generator_list(lon,lat,time,[data_full],[missing],
                    train = True,
+                   ntime_win = ntime_win,
                    obs_err_std = [obs_err_std],
                    jitter_std = [jitter_std])
 
 def data_generator_list(lon,lat,time,data_full,missing,
                    train = True,
+                   ntime_win = 3,
                    obs_err_std = [1.],
                    jitter_std = [0.05]):
     """
@@ -156,6 +159,10 @@ The output of this function is `datagen`, `ntime` and `meandata`. `datagen` is a
 generator function returning a single image (relative to the mean `meandata`),
 `ntime` the number of time instances for training or testing and `meandata` is
 the temporal mean of the data.
+
+    # number of time instances, must be odd
+    ntime_win = 3
+
 """
     sz = data_full[0].shape
     print("sz ",sz)
@@ -176,8 +183,6 @@ the temporal mean of the data.
         if data_full[i].shape != data_full[0].shape:
             raise ArgumentError("shape are not coherent")
 
-    # number of time instances, must be odd
-    ntime_win = 3
 
     # scaled mean and inverse of error variance for every input data
     # plus lon, lat, cos(time) and sin(time)
@@ -745,6 +750,7 @@ e.g. sea points for sea surface temperature.
 
 def reconstruct_gridded_nc(filename,varname,outdir,
                            jitter_std = 0.05,
+                           ntime_win = 3,
                            transfun = (identity, identity),
                            **kwargs):
     """
@@ -762,10 +768,14 @@ See `DINCAE.reconstruct` for other keyword arguments and
 
     train_datagen,nvar,train_len,meandata = data_generator(
         lon,lat,time,data,missing,
+        ntime_win = ntime_win,
         jitter_std = jitter_std)
     test_datagen,nvar,test_len,test_meandata = data_generator(
         lon,lat,time,data,missing,
+        ntime_win = ntime_win,
         train = False)
+
+    print("Number of input variables: ",nvar)
 
     reconstruct(
         lon,lat,mask,meandata,
@@ -773,6 +783,7 @@ See `DINCAE.reconstruct` for other keyword arguments and
         test_datagen,test_len,
         outdir,
         transfun = transfun,
+        nvar = nvar,
         **kwargs)
 
 
@@ -833,6 +844,7 @@ See `DINCAE.reconstruct` for other keyword arguments and
         ntime_win = ntime_win,
         train = False)
 
+    print("Number of input variables: ",nvar)
 
     fname = reconstruct(
         lon,lat,mask,meandata,
