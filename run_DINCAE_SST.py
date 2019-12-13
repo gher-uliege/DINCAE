@@ -14,6 +14,7 @@ outdir = os.path.expanduser("~/tmp/Data/Med/AVHRR/Fig-jitter-more-skip-avg-pool-
 
 iseed = 12345
 epochs = 1
+loss = []
 
 DINCAE.reconstruct_gridded_nc(filename,varname,outdir,
                               resize_method = resize_method,

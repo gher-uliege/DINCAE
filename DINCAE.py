@@ -379,6 +379,7 @@ def reconstruct(lon,lat,mask,meandata,
                 learning_rate_decay_epoch = 100,
                 iseed = None,
                 nprefectch = 0,
+                loss = [],
 ):
     """
 Train a neural network to reconstruct missing data using the training data set
@@ -433,8 +434,9 @@ e.g. sea points for sea surface temperature.
 
     enc_ksize = [nvar] + enc_ksize_internal
 
-    if not os.path.isdir(outdir):
-        os.mkdir(outdir)
+    if outdir != None:
+        if not os.path.isdir(outdir):
+            os.mkdir(outdir)
 
     jmax,imax = mask.shape
 
@@ -694,6 +696,7 @@ e.g. sea points for sea surface temperature.
                     dropout_rate: dropout_rate_train})
 
             #logger.debug('running done')
+            loss.append(batch_cost)
 
             if tensorboard:
                 train_writer.add_summary(summary, index)
@@ -706,7 +709,8 @@ e.g. sea points for sea surface temperature.
                       "Training loss: {:.20f}".format(batch_cost),
                       "RMS: {:.20f}".format(batch_RMS), batch_learning_rate )
 
-        if (e == epochs-1) or ((save_each > 0) and (e % save_each == 0)):
+
+        if ((e == epochs-1) or ((save_each > 0) and (e % save_each == 0))) and outdir != None:
             print("Save output",e)
 
             timestr = datetime.now().strftime("%Y-%m-%dT%H%M%S")
@@ -726,7 +730,7 @@ e.g. sea points for sea surface temperature.
                 savesample(fname,batch_m_rec,batch_σ2_rec,meandata,lon,lat,e,ii,
                            offset, transfun = transfun)
 
-        if (save_model_each > 0) and (e % save_model_each == 0):
+        if ((save_model_each > 0) and (e % save_model_each == 0)) and outdir != None:
             save_path = saver.save(sess, os.path.join(
                 outdir,"model-{:03d}.ckpt".format(e+1)))
 
@@ -774,7 +778,8 @@ See `DINCAE.reconstruct` for other keyword arguments and
 
 
 def reconstruct_gridded_files(fields,outdir,
-                           **kwargs):
+                              ntime_win = 3,
+                              **kwargs):
     """
 Train a neural network to reconstruct missing data from the NetCDF variable
 `varname` in the NetCDF file `filename`. Results are saved in the output
@@ -815,16 +820,17 @@ See `DINCAE.reconstruct` for other keyword arguments and
     mask = fields[0]["mask"]
 
     ndata = len(fields)
-    # 6 is 2 (mean/sigma^2 and 1/sigma2) * 3 (previous, current and next)
-    nvar = 6*ndata + 4
 
     train_datagen,nvar,train_len,meandata = data_generator_list(
         lon,lat,time,data_full,missing,
         obs_err_std = obs_err_std,
-        jitter_std = jitter_std)
+        jitter_std = jitter_std,
+        ntime_win = ntime_win,
+    )
     test_datagen,nvar,test_len,test_meandata = data_generator_list(
         lon,lat,time,data_full,missing,
         obs_err_std = obs_err_std,
+        ntime_win = ntime_win,
         train = False)
 
 
