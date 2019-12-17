@@ -16,12 +16,14 @@ outdir = os.path.expanduser("~/tmp/Data/Med/AVHRR/Fig-jitter-more-skip-avg-pool-
 iseed = 12345
 nprefectch = 1
 loss = []
+nepoch_keep_missing = 10
 
 DINCAE.reconstruct_gridded_nc(filename,varname,outdir,
                               resize_method = resize_method,
                               iseed = iseed,
                               nprefectch = nprefectch,
                               loss = loss,
+                              nepoch_keep_missing = nepoch_keep_missing,
 )
 
 for l in loss:

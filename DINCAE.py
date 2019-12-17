@@ -385,6 +385,7 @@ def reconstruct(lon,lat,mask,meandata,
                 iseed = None,
                 nprefectch = 0,
                 loss = [],
+                nepoch_keep_missing = 0,
 ):
     """
 Train a neural network to reconstruct missing data using the training data set
@@ -436,6 +437,7 @@ e.g. sea points for sea surface temperature.
     print("regularization_L2_beta ",regularization_L2_beta)
     print("enc_ksize_internal ",enc_ksize_internal)
     print("nvar ",nvar)
+    print("nepoch_keep_missing ",nepoch_keep_missing)
 
     enc_ksize = [nvar] + enc_ksize_internal
 
@@ -687,8 +689,10 @@ e.g. sea points for sea surface temperature.
 
     # loop over epochs
     for e in range(epochs):
-        # use same clouds for every 20 epochs
-        random.seed(12345 + e//20)
+        if nepoch_keep_missing > 0:
+            # use same clouds for every e.g. 20 epochs
+            random.seed(iseed + e//nepoch_keep_missing)
+
 
         # loop over training datasets
         for ii in range(ceil(train_len / batch_size)):
