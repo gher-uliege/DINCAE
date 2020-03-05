@@ -7,11 +7,15 @@
 import DINCAE
 import tensorflow as tf
 import os
+import urllib.request
 
 #resize_method = tf.image.ResizeMethod.BILINEAR
 resize_method = tf.image.ResizeMethod.NEAREST_NEIGHBOR
+filename = "avhrr_sub_add_clouds.nc"
 
-filename = os.path.expanduser("~/tmp/Data/Med/AVHRR/Data/avhrr_sub_add_clouds.nc")
+if not os.path.isfile(filename):
+   urllib.request.urlretrieve("https://dox.ulg.ac.be/index.php/s/C7rwJ9goIRpvEcC/download", filename)
+
 varname = "SST"
 outdir = None
 
