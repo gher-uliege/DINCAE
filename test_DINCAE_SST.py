@@ -39,8 +39,13 @@ refloss = {
     "1.15.0": 1.074228763580322265625000000000
     }
 
+
 if tf.__version__ in refloss:
-    assert loss[-1] == refloss[tf.__version__]
+    # 1.12 on travis
+    # 1.635820031166076660156250000000
+
+    print("loss equal ",loss[-1] == refloss[tf.__version__])
+    assert abs(loss[-1] - refloss[tf.__version__]) < 0.05
 else:
     print("warning: no reference value for version tensorflow " * tf.__version__)
     assert loss[-1] < 2
