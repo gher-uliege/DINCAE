@@ -15,7 +15,7 @@ setuptools.setup(
     install_requires=[
         "netCDF4>=1.4.2",
         "numpy>=1.15.4",
-        "tensorflow==1.12",
+        "tensorflow==1.15",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
