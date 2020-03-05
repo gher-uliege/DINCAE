@@ -31,13 +31,25 @@ The code is available at:
 """
 import os
 import random
-from math import ceil
+from math import ceil, floor
 from netCDF4 import Dataset, num2date
 import numpy as np
 import tensorflow as tf
 from datetime import datetime
+import logging
+
+logger = logging.getLogger('root')
+FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
+logging.basicConfig(format=FORMAT)
+logger.setLevel(logging.DEBUG)
+
 
 __all__ = ["reconstruct","load_gridded_nc","data_generator","reconstruct_gridded_nc"]
+
+
+def identity(x):
+    return x
+
 
 def variable_summaries(var):
     """
@@ -55,7 +67,7 @@ summaries to a Tensor graph (for TensorBoard visualization)
       tf.summary.histogram('histogram', var)
 
 
-def load_gridded_nc(fname,varname):
+def load_gridded_nc(fname,varname, minfrac = 0.05):
     """
 Load the variable `varname` from the NetCDF file `fname`. The variable `lon` is
 the longitude in degrees east, `lat` is the latitude in degrees North, `time` is
@@ -89,18 +101,51 @@ attributes:
     time = num2date(ds.variables["time"][:],ds.variables["time"].units);
 
     data = ds.variables[varname][:,:,:];
-    mask = ds.variables["mask"][:,:].data == 1;
 
+    if "mask" in ds.variables:
+        mask = ds.variables["mask"][:,:].data == 1;
+    else:
+        print("compute mask for ",varname,": sea point should have at least ",
+              minfrac," for valid data tought time")
+
+        if np.isscalar(data.mask):
+            mask = np.ones((data.shape[1],data.shape[2]),dtype=np.bool)
+        else:
+            mask = np.mean(~data.mask,axis=0) > minfrac
+
+
+        print("mask: sea points ",np.sum(mask))
+        print("mask: land points ",np.sum(~mask))
+
+    print("varname ",varname,mask.shape)
     ds.close()
-    missing = data.mask
 
+    if np.isscalar(data.mask):
+        missing = np.zeros(data.shape,dtype=np.bool)
+    else:
+        missing = data.mask
+
+    print("data shape, range",data.shape,data.min(),data.max())
     return lon,lat,time,data,missing,mask
 
 
 def data_generator(lon,lat,time,data_full,missing,
                    train = True,
+                   ntime_win = 3,
                    obs_err_std = 1.,
                    jitter_std = 0.05):
+
+    return data_generator_list(lon,lat,time,[data_full],[missing],
+                   train = True,
+                   ntime_win = ntime_win,
+                   obs_err_std = [obs_err_std],
+                   jitter_std = [jitter_std])
+
+def data_generator_list(lon,lat,time,data_full,missing,
+                   train = True,
+                   ntime_win = 3,
+                   obs_err_std = [1.],
+                   jitter_std = [0.05]):
     """
 Return a generator for training (`train = True`) or testing (`train = False`)
 the neural network. `obs_err_std` is the error standard deviation of the
@@ -114,64 +159,92 @@ The output of this function is `datagen`, `ntime` and `meandata`. `datagen` is a
 generator function returning a single image (relative to the mean `meandata`),
 `ntime` the number of time instances for training or testing and `meandata` is
 the temporal mean of the data.
-"""
-    ntime = data_full.shape[0]
 
-    meandata = data_full.mean(axis=0,keepdims=True)
+    # number of time instances, must be odd
+    ntime_win = 3
+
+"""
+    sz = data_full[0].shape
+    print("sz ",sz)
+    ntime = sz[0]
+    ndata = len(data_full)
 
     dayofyear = np.array([d.timetuple().tm_yday for d in time])
     dayofyear_cos = np.cos(dayofyear/365.25)
     dayofyear_sin = np.sin(dayofyear/365.25)
 
+    meandata = [None] * ndata
+    data = [None] * ndata
 
-    data = data_full - meandata
+    for i in range(ndata):
+        meandata[i] = data_full[i].mean(axis=0,keepdims=True)
+        data[i] = data_full[i] - meandata[i]
 
-    sz = data.shape
+        if data_full[i].shape != data_full[0].shape:
+            raise ArgumentError("shape are not coherent")
 
-    x = np.zeros((sz[0],sz[1],sz[2],6),dtype="float32")
 
-    x[:,:,:,1] = (1-data.mask) / (obs_err_std**2)  # error variance
-    x[:,:,:,0] = data.filled(0) / (obs_err_std**2)
+    # scaled mean and inverse of error variance for every input data
+    # plus lon, lat, cos(time) and sin(time)
+    x = np.zeros((sz[0],sz[1],sz[2],2*ndata + 4),dtype="float32")
+
+    for i in range(ndata):
+        x[:,:,:,2*i] = data[i].filled(0) / (obs_err_std[i]**2)
+        x[:,:,:,2*i+1] = (1-data[i].mask) / (obs_err_std[i]**2)  # error variance
 
     # scale between -1 and 1
     lon_scaled = 2 * (lon - np.min(lon)) / (np.max(lon) - np.min(lon)) - 1
     lat_scaled = 2 * (lat - np.min(lat)) / (np.max(lat) - np.min(lat)) - 1
 
-    x[:,:,:,2] = lon_scaled.reshape(1,1,len(lon))
-    x[:,:,:,3] = lat_scaled.reshape(1,len(lat),1)
-    x[:,:,:,4] = dayofyear_cos.reshape(len(dayofyear_cos),1,1)
-    x[:,:,:,5] = dayofyear_sin.reshape(len(dayofyear_sin),1,1)
+    i = 2*ndata
+    x[:,:,:,i  ] = lon_scaled.reshape(1,1,len(lon))
+    x[:,:,:,i+1] = lat_scaled.reshape(1,len(lat),1)
+    x[:,:,:,i+2] = dayofyear_cos.reshape(len(dayofyear_cos),1,1)
+    x[:,:,:,i+3] = dayofyear_sin.reshape(len(dayofyear_sin),1,1)
+
+    nvar = 2 * ntime_win * ndata + 4
 
     # generator for data
     def datagen():
-        for i in range(data.shape[0]):
-            xin = np.zeros((sz[1],sz[2],6+2*2),dtype="float32")
-            xin[:,:,0:6]  = x[i,:,:,:]
-            xin[:,:,6:8]  = x[max(0,i-1),:,:,0:2] # previous
-            xin[:,:,8:10] = x[min(data.shape[0]-1,i+1),:,:,0:2] # next
+        for i in range(ntime):
+            xin = np.zeros((sz[1],sz[2],nvar),dtype="float32")
+            xin[:,:,0:(2*ndata + 4)]  = x[i,:,:,:]
 
+            ioffset = (2*ndata + 4)
+            for time_index in range(0,ntime_win):
+                # nn is centered on the current time, e.g. -1 (past), 0 (present), 1 (future)
+                nn = time_index - (ntime_win//2)
+                # current time is already included, skip it
+                if nn != 0:
+                    i_clamped = min(ntime-1,max(0,i+nn))
+                    xin[:,:,ioffset:(ioffset + 2*ndata)] = x[i_clamped,:,:,0:(2*ndata)]
+                    ioffset = ioffset + 2*ndata
 
             # add missing data during training randomly
             if train:
-                imask = random.randrange(0,missing.shape[0])
-                selmask = missing[imask,:,:]
+                #imask = random.randrange(0,missing.shape[0])
+                imask = random.randrange(0,ntime)
 
-                xin[:,:,0][selmask] = 0
-                xin[:,:,1][selmask] = 0
+                for j in range(ndata):
+                    selmask = missing[j][imask,:,:]
+                    xin[:,:,2*j][selmask] = 0
+                    xin[:,:,2*j+1][selmask] = 0
 
                 # add jitter
-                xin[:,:,0] = xin[:,:,0] + jitter_std * np.random.randn(sz[1],sz[2])
-                xin[:,:,6] = xin[:,:,6] + jitter_std * np.random.randn(sz[1],sz[2])
-                xin[:,:,8] = xin[:,:,8] + jitter_std * np.random.randn(sz[1],sz[2])
+                for j in range(ndata):
+                    xin[:,:,2*j] += jitter_std[j] * np.random.randn(sz[1],sz[2])
+                    xin[:,:,2*j + 2*ndata + 4] += jitter_std[j] * np.random.randn(sz[1],sz[2])
+                    xin[:,:,2*j + 4*ndata + 4] += jitter_std[j] * np.random.randn(sz[1],sz[2])
 
             yield (xin,x[i,:,:,0:2])
 
-    return datagen,data.shape[0],meandata
+    # meandata[0] is the primary variable to be reconstructed
+    return datagen,nvar,ntime,meandata[0]
 
 
-def savesample(fname,batch_m_rec,batch_σ2_rec,meandata,lon,lat,e,ii,offset):
+def savesample_old_without_mean(fname,batch_m_rec,batch_σ2_rec,meandata,lon,lat,e,ii,offset):
     fill_value = -9999.
-    recdata = batch_m_rec # + meandata;
+    recdata = batch_m_rec  # + meandata;
     batch_sigma_rec = np.sqrt(batch_σ2_rec)
 
     if ii == 0:
@@ -190,12 +263,12 @@ def savesample(fname,batch_m_rec,batch_σ2_rec,meandata,lon,lat,e,ii,offset):
             'meandata', 'f4', ('lat','lon'),
             fill_value=fill_value)
 
-        nc_batch_m_rec = root_grp.createVariable(
-            'batch_m_rec', 'f4', ('time', 'lat', 'lon'),
+        nc_m_rec = root_grp.createVariable(
+            'm_rec', 'f4', ('time', 'lat', 'lon'),
             fill_value=fill_value)
 
-        nc_batch_sigma_rec = root_grp.createVariable(
-            'batch_sigma_rec', 'f4', ('time', 'lat', 'lon',),
+        nc_sigma_rec = root_grp.createVariable(
+            'sigma_rec', 'f4', ('time', 'lat', 'lon',),
             fill_value=fill_value)
 
         # data
@@ -205,14 +278,77 @@ def savesample(fname,batch_m_rec,batch_σ2_rec,meandata,lon,lat,e,ii,offset):
     else:
         # append to file
         root_grp = Dataset(fname, 'a')
-        nc_batch_m_rec = root_grp.variables['batch_m_rec']
-        nc_batch_sigma_rec = root_grp.variables['batch_sigma_rec']
+        nc_m_rec = root_grp.variables['m_rec']
+        nc_sigma_rec = root_grp.variables['sigma_rec']
 
-    for n in range(batch_m_rec.shape[0]):
-        nc_batch_m_rec[n+offset,:,:] = np.ma.masked_array(
+    for n in range(m_rec.shape[0]):
+        nc_m_rec[n+offset,:,:] = np.ma.masked_array(
             batch_m_rec[n,:,:],meandata.mask)
         nc_batch_sigma_rec[n+offset,:,:] = np.ma.masked_array(
             batch_sigma_rec[n,:,:],meandata.mask)
+
+
+    root_grp.close()
+
+
+def savesample(fname,m_rec,σ2_rec,meandata,lon,lat,e,ii,offset,
+               transfun = (identity, identity)):
+    fill_value = -9999.
+    recdata = transfun[1](m_rec  + meandata)
+    # todo apply transfun to sigma_rec
+
+    if transfun[1] == np.exp:
+        # relative error
+        #sigma_rec = recdata * np.sqrt(σ2_rec)
+        sigma_rec = np.sqrt(σ2_rec) # debug
+    elif transfun[1] == identity:
+        sigma_rec = np.sqrt(σ2_rec)
+    else:
+        print("warning: sigma_rec is not transformed")
+        sigma_rec = np.sqrt(σ2_rec)
+
+
+    if ii == 0:
+        # create file
+        root_grp = Dataset(fname, 'w', format='NETCDF4')
+
+        # dimensions
+        root_grp.createDimension('time', None)
+        root_grp.createDimension('lon', len(lon))
+        root_grp.createDimension('lat', len(lat))
+
+        # variables
+        nc_lon = root_grp.createVariable('lon', 'f4', ('lon',))
+        nc_lat = root_grp.createVariable('lat', 'f4', ('lat',))
+        nc_meandata = root_grp.createVariable(
+            'meandata', 'f4', ('lat','lon'),
+            fill_value=fill_value)
+
+        nc_mean_rec = root_grp.createVariable(
+            'mean_rec', 'f4', ('time', 'lat', 'lon'),
+            fill_value=fill_value)
+
+        nc_sigma_rec = root_grp.createVariable(
+            'sigma_rec', 'f4', ('time', 'lat', 'lon',),
+            fill_value=fill_value)
+
+        # data
+        nc_lon[:] = lon
+        nc_lat[:] = lat
+        nc_meandata[:,:] = meandata
+    else:
+        # append to file
+        root_grp = Dataset(fname, 'a')
+        nc_mean_rec = root_grp.variables['mean_rec']
+        nc_sigma_rec = root_grp.variables['sigma_rec']
+
+    for n in range(m_rec.shape[0]):
+#        nc_mean_rec[n+offset,:,:] = np.ma.masked_array(
+#            recdata[n,:,:],meandata.mask)
+        nc_mean_rec[n+offset,:,:] = np.ma.masked_array(
+            recdata[n,:,:],meandata.mask)
+        nc_sigma_rec[n+offset,:,:] = np.ma.masked_array(
+            sigma_rec[n,:,:],meandata.mask)
 
 
     root_grp.close()
@@ -239,9 +375,17 @@ def reconstruct(lon,lat,mask,meandata,
                 shuffle_buffer_size = 3*15,
                 nvar = 10,
                 enc_ksize_internal = [16,24,36,54],
+                frac_dense_layer = [0.2],
                 clip_grad = 5.0,
                 regularization_L2_beta = 0,
-                iseed = None
+                transfun = (identity,identity),
+                savesample = savesample,
+                learning_rate = 1e-3,
+                learning_rate_decay_epoch = 100,
+                iseed = None,
+                nprefectch = 0,
+                loss = [],
+                nepoch_keep_missing = 0,
 ):
     """
 Train a neural network to reconstruct missing data using the training data set
@@ -280,7 +424,10 @@ e.g. sea points for sea surface temperature.
       (after the input convolutional layer)
  * `clip_grad`: clip gradient to a maximum L2-norm.
  * `regularization_L2_beta`: scalar to enforce L2 regularization on the weight
+ * `learning_rate`:  The initial learning rate
+ * `learning_rate_decay_epoch`: The exponential recay rate of the leaning rate. After `learning_rate_decay_epoch` the learning rate is halved. The learning rate is compute as  `learning_rate * 0.5^(epoch / learning_rate_decay_epoch)`. `learning_rate_decay_epoch` can be `numpy.inf` for a constant learning rate
 """
+
 
     if iseed != None:
         np.random.seed(iseed)
@@ -289,10 +436,14 @@ e.g. sea points for sea surface temperature.
 
     print("regularization_L2_beta ",regularization_L2_beta)
     print("enc_ksize_internal ",enc_ksize_internal)
+    print("nvar ",nvar)
+    print("nepoch_keep_missing ",nepoch_keep_missing)
+
     enc_ksize = [nvar] + enc_ksize_internal
 
-    if not os.path.isdir(outdir):
-        os.mkdir(outdir)
+    if outdir != None:
+        if not os.path.isdir(outdir):
+            os.mkdir(outdir)
 
     jmax,imax = mask.shape
 
@@ -303,6 +454,7 @@ e.g. sea points for sea surface temperature.
     train_dataset = tf.data.Dataset.from_generator(
         train_datagen, (tf.float32,tf.float32),
         (tf.TensorShape([jmax,imax,nvar]),tf.TensorShape([jmax,imax,2]))).repeat().shuffle(shuffle_buffer_size).batch(batch_size)
+
     train_iterator = train_dataset.make_one_shot_iterator()
     train_iterator_handle = sess.run(train_iterator.string_handle())
 
@@ -311,6 +463,10 @@ e.g. sea points for sea surface temperature.
     test_dataset = tf.data.Dataset.from_generator(
         test_datagen, (tf.float32,tf.float32),
         (tf.TensorShape([jmax,imax,nvar]),tf.TensorShape([jmax,imax,2]))).batch(batch_size)
+
+    if nprefectch > 0:
+        train_dataset = train_dataset.prefetch(nprefectch)
+        test_dataset = test_dataset.prefetch(nprefectch)
 
     test_iterator = tf.data.Iterator.from_structure(test_dataset.output_types,
                                                     test_dataset.output_shapes)
@@ -327,7 +483,8 @@ e.g. sea points for sea surface temperature.
 
 
 
-    # encoder
+    # Encoder
+
     enc_nlayers = len(enc_ksize)
     enc_conv = [None] * enc_nlayers
     enc_avgpool = [None] * enc_nlayers
@@ -351,28 +508,34 @@ e.g. sea points for sea surface temperature.
 
         enc_last = enc_avgpool[-1]
 
-    # Dense Layer
-    ndensein = enc_last.shape[1:].num_elements()
-
-    avgpool_flat = tf.reshape(enc_last, [-1, ndensein])
-    dense_units = [ndensein//5]
-
     # default is no drop-out
     dropout_rate = tf.placeholder_with_default(0.0, shape=())
 
-    dense = [None] * 5
-    dense[0] = avgpool_flat
-    dense[1] = tf.layers.dense(inputs=dense[0],
-                               units=dense_units[0],
-                               activation=tf.nn.relu)
-    dense[2] = tf.layers.dropout(inputs=dense[1], rate=dropout_rate)
-    dense[3] = tf.layers.dense(inputs=dense[2],
-                               units=ndensein,
-                               activation=tf.nn.relu)
-    dense[4] = tf.layers.dropout(inputs=dense[3], rate=dropout_rate)
+    if len(frac_dense_layer) == 0:
+        dense_2d = enc_last
+    else:
+        # Dense Layers
+        ndensein = enc_last.shape[1:].num_elements()
+        print("ndensein ",ndensein)
 
+        avgpool_flat = tf.reshape(enc_last, [-1, ndensein])
 
-    dense_2d = tf.reshape(dense[-1], tf.shape(enc_last))
+        # number of output units for the dense layers
+        dense_units = [floor(ndensein*frac) for frac in frac_dense_layer + list(reversed(frac_dense_layer[:-1]))]
+        # last dense layer must give again the same number as input units
+        dense_units.append(ndensein)
+
+        dense = [None] * (4*len(frac_dense_layer)+1)
+        dense[0] = avgpool_flat
+
+        for i in range(2*len(frac_dense_layer)):
+            dense[2*i+1] = tf.layers.dense(inputs=dense[2*i],
+                                           units=dense_units[i],
+                                           activation=tf.nn.relu)
+            print("dense layer: output units: ",i,dense[2*i+1].shape)
+            dense[2*i+2] = tf.layers.dropout(inputs=dense[2*i+1], rate=dropout_rate)
+
+        dense_2d = tf.reshape(dense[-1], tf.shape(enc_last))
 
     ### Decoder
     dec_conv = [None] * enc_nlayers
@@ -382,6 +545,7 @@ e.g. sea points for sea surface temperature.
 
     for l in range(1,enc_nlayers):
         l2 = enc_nlayers-l
+
         dec_upsample[l] = tf.image.resize_images(
             dec_conv[l-1],
             enc_conv[l2].shape[1:3],
@@ -473,15 +637,32 @@ e.g. sea points for sea surface temperature.
                 tf.reverse(tf.multiply(σ2_rec,mask_issea),[1]),-1))
 
     # parameters for Adam optimizer (default values)
-    learning_rate = 1e-3
+    #learning_rate = 1e-3
     beta1 = 0.9
     beta2 = 0.999
     epsilon = 1e-08
 
-    optimizer = tf.train.AdamOptimizer(learning_rate,beta1,beta2,epsilon)
+    # global_step = tf.Variable(0, trainable=False)
+    # starter_learning_rate = 1e-3
+    # learning_rate = tf.train.exponential_decay(starter_learning_rate,
+    #                                                      global_step,
+    #                                                      50, 0.96, staircase=True)
+
+    learning_rate_ = tf.placeholder(tf.float32, shape=[])
+
+    optimizer = tf.train.AdamOptimizer(learning_rate_,beta1,beta2,epsilon)
     gradients, variables = zip(*optimizer.compute_gradients(cost))
     gradients, _ = tf.clip_by_global_norm(gradients, clip_grad)
     opt = optimizer.apply_gradients(zip(gradients, variables))
+
+    # Passing global_step to minimize() will increment it at each step.
+    # opt = (
+    #     tf.train.GradientDescentOptimizer(learning_rate)
+    #     .minimize(cost, global_step=global_step)
+    # )
+
+    # optimize = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost, global_step=global_step)
+
 
     dt_start = datetime.now()
     print(dt_start)
@@ -497,7 +678,9 @@ e.g. sea points for sea surface temperature.
 
     index = 0
 
+    print("init")
     sess.run(tf.global_variables_initializer())
+    logger.debug('init done')
 
     saver = tf.train.Saver()
 
@@ -506,16 +689,25 @@ e.g. sea points for sea surface temperature.
 
     # loop over epochs
     for e in range(epochs):
+        if nepoch_keep_missing > 0:
+            # use same clouds for every e.g. 20 epochs
+            random.seed(iseed + e//nepoch_keep_missing)
+
 
         # loop over training datasets
         for ii in range(ceil(train_len / batch_size)):
 
             # run a single step of the optimizer
-            summary, batch_cost, batch_RMS, bs, _ = sess.run(
-                [merged, cost, RMS, mask_noncloud, opt],feed_dict={
+            #logger.debug(f'running {ii}')
+            summary, batch_cost, batch_RMS, bs, batch_learning_rate, _ = sess.run(
+                [merged, cost, RMS, mask_noncloud, learning_rate_, opt],feed_dict={
                     handle: train_iterator_handle,
                     mask_issea: mask,
+                    learning_rate_: learning_rate * (0.5 ** (e / learning_rate_decay_epoch)),
                     dropout_rate: dropout_rate_train})
+
+            #logger.debug('running done')
+            loss.append(batch_cost)
 
             if tensorboard:
                 train_writer.add_summary(summary, index)
@@ -523,11 +715,13 @@ e.g. sea points for sea surface temperature.
             index += 1
 
             if ii % 20 == 0:
+            #if ii % 1 == 0:
                 print("Epoch: {}/{}...".format(e+1, epochs),
-                      "Training loss: {:.4f}".format(batch_cost),
-                      "RMS: {:.4f}".format(batch_RMS))
+                      "Training loss: {:.20f}".format(batch_cost),
+                      "RMS: {:.20f}".format(batch_RMS), batch_learning_rate )
 
-        if (e == epochs-1) or ((save_each > 0) and (e % save_each == 0)):
+
+        if ((e == epochs-1) or ((save_each > 0) and (e % save_each == 0))) and outdir != None:
             print("Save output",e)
 
             timestr = datetime.now().strftime("%Y-%m-%dT%H%M%S")
@@ -545,9 +739,9 @@ e.g. sea points for sea surface temperature.
                 # time instances already written
                 offset = ii*batch_size
                 savesample(fname,batch_m_rec,batch_σ2_rec,meandata,lon,lat,e,ii,
-                           offset)
+                           offset, transfun = transfun)
 
-        if (save_model_each > 0) and (e % save_model_each == 0):
+        if ((save_model_each > 0) and (e % save_model_each == 0)) and outdir != None:
             save_path = saver.save(sess, os.path.join(
                 outdir,"model-{:03d}.ckpt".format(e+1)))
 
@@ -562,6 +756,8 @@ e.g. sea points for sea surface temperature.
 
 def reconstruct_gridded_nc(filename,varname,outdir,
                            jitter_std = 0.05,
+                           ntime_win = 3,
+                           transfun = (identity, identity),
                            **kwargs):
     """
 Train a neural network to reconstruct missing data from the NetCDF variable
@@ -574,18 +770,98 @@ See `DINCAE.reconstruct` for other keyword arguments and
 """
 
     lon,lat,time,data,missing,mask = load_gridded_nc(filename,varname)
-    train_datagen,train_len,meandata = data_generator(
+    data_trans = transfun[0](data)
+
+    train_datagen,nvar,train_len,meandata = data_generator(
         lon,lat,time,data,missing,
+        ntime_win = ntime_win,
         jitter_std = jitter_std)
-    test_datagen,test_len,test_meandata = data_generator(
+    test_datagen,nvar,test_len,test_meandata = data_generator(
         lon,lat,time,data,missing,
+        ntime_win = ntime_win,
         train = False)
+
+    print("Number of input variables: ",nvar)
 
     reconstruct(
         lon,lat,mask,meandata,
         train_datagen,train_len,
         test_datagen,test_len,
-        outdir,**kwargs)
+        outdir,
+        transfun = transfun,
+        nvar = nvar,
+        **kwargs)
+
+
+
+def reconstruct_gridded_files(fields,outdir,
+                              ntime_win = 3,
+                              **kwargs):
+    """
+Train a neural network to reconstruct missing data from the NetCDF variable
+`varname` in the NetCDF file `filename`. Results are saved in the output
+directory `outdir`. `jitter_std` is the standard deviation of the noise to be
+added to the data during training.
+See `DINCAE.reconstruct` for other keyword arguments and
+`DINCAE.load_gridded_nc` for the NetCDF format.
+
+"""
+
+    data_full = [None] * len(fields)
+    missing = [None] * len(fields)
+    jitter_std = [None] * len(fields)
+    transfun = [None] * len(fields)
+    varnames = [None] * len(fields)
+    obs_err_std = [1] * len(fields) # value is irrelevant
+    lon = []
+    lat = []
+    time = []
+
+    for (i,field) in enumerate(fields):
+        transfun[i] = field.get("transfun",(identity,identity))
+        varnames[i] = field["varname"]
+
+        field["lon"],field["lat"],field["time"],field["data"],field["missing"],field["mask"] = load_gridded_nc(field["filename"],field["varname"])
+
+        data_full[i] = transfun[i][0](field["data"])
+
+        print("typeof- ",type(field["data"]))
+        print("typeof ",type(data_full[i]))
+
+        missing[i] = field["missing"]
+        jitter_std[i] = field.get("jitter_std",0)
+
+    lon = fields[0]["lon"]
+    lat = fields[0]["lat"]
+    time = fields[0]["time"]
+    mask = fields[0]["mask"]
+
+    ndata = len(fields)
+
+    train_datagen,nvar,train_len,meandata = data_generator_list(
+        lon,lat,time,data_full,missing,
+        obs_err_std = obs_err_std,
+        jitter_std = jitter_std,
+        ntime_win = ntime_win,
+    )
+    test_datagen,nvar,test_len,test_meandata = data_generator_list(
+        lon,lat,time,data_full,missing,
+        obs_err_std = obs_err_std,
+        ntime_win = ntime_win,
+        train = False)
+
+    print("Number of input variables: ",nvar)
+
+    fname = reconstruct(
+        lon,lat,mask,meandata,
+        train_datagen,train_len,
+        test_datagen,test_len,
+        outdir,
+        transfun = transfun[0],
+        nvar = nvar,
+        **kwargs)
+
+    return fname
 
 #  LocalWords:  DINCAE Convolutional MERCHANTABILITY gridded
 #  LocalWords:  TensorBoard stddev varname NetCDF fname lon numpy datetime
