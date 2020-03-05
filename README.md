@@ -1,5 +1,6 @@
 [![documentation latest](https://img.shields.io/badge/docs-latest-blue.svg)](https://gher-ulg.github.io/DINCAE/)
 [![DOI](https://zenodo.org/badge/193079989.svg)](https://zenodo.org/badge/latestdoi/193079989)
+[![Build Status](https://travis-ci.org/gher-ulg/DINCAE.svg?branch=master)](https://travis-ci.org/gher-ulg/DINCAE)
 
 # DINCAE
 
