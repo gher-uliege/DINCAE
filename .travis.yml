@@ -6,4 +6,4 @@ install:
   - pip install .
 # command to run tests
 script:
-  - pytest
+  - python3 test_DINCAE_SST.py
