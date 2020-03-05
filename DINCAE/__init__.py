@@ -56,15 +56,15 @@ def variable_summaries(var):
 Attach several diagnostics (mean, std. dev., ..) of the variable `var`
 summaries to a Tensor graph (for TensorBoard visualization)
 """
-    with tf.name_scope('summaries'):
-      mean = tf.reduce_mean(var)
-      tf.summary.scalar('mean', mean)
-      with tf.name_scope('stddev'):
-        stddev = tf.sqrt(tf.reduce_mean(tf.square(var - mean)))
-      tf.summary.scalar('stddev', stddev)
-      tf.summary.scalar('max', tf.reduce_max(var))
-      tf.summary.scalar('min', tf.reduce_min(var))
-      tf.summary.histogram('histogram', var)
+    with tf.compat.v1.name_scope('summaries'):
+      mean = tf.reduce_mean(input_tensor=var)
+      tf.compat.v1.summary.scalar('mean', mean)
+      with tf.compat.v1.name_scope('stddev'):
+        stddev = tf.sqrt(tf.reduce_mean(input_tensor=tf.square(var - mean)))
+      tf.compat.v1.summary.scalar('stddev', stddev)
+      tf.compat.v1.summary.scalar('max', tf.reduce_max(input_tensor=var))
+      tf.compat.v1.summary.scalar('min', tf.reduce_min(input_tensor=var))
+      tf.compat.v1.summary.histogram('histogram', var)
 
 
 def load_gridded_nc(fname,varname, minfrac = 0.05):
@@ -431,7 +431,7 @@ e.g. sea points for sea surface temperature.
 
     if iseed != None:
         np.random.seed(iseed)
-        tf.set_random_seed(np.random.randint(0,2**32-1))
+        tf.compat.v1.set_random_seed(np.random.randint(0,2**32-1))
         random.seed(np.random.randint(0,2**32-1))
 
     print("regularization_L2_beta ",regularization_L2_beta)
@@ -447,7 +447,7 @@ e.g. sea points for sea surface temperature.
 
     jmax,imax = mask.shape
 
-    sess = tf.Session()
+    sess = tf.compat.v1.Session()
 
     # Repeat the input indefinitely.
     # training dataset iterator
@@ -455,7 +455,7 @@ e.g. sea points for sea surface temperature.
         train_datagen, (tf.float32,tf.float32),
         (tf.TensorShape([jmax,imax,nvar]),tf.TensorShape([jmax,imax,2]))).repeat().shuffle(shuffle_buffer_size).batch(batch_size)
 
-    train_iterator = train_dataset.make_one_shot_iterator()
+    train_iterator = tf.compat.v1.data.make_one_shot_iterator(train_dataset)
     train_iterator_handle = sess.run(train_iterator.string_handle())
 
     # test dataset without added clouds
@@ -468,14 +468,14 @@ e.g. sea points for sea surface temperature.
         train_dataset = train_dataset.prefetch(nprefectch)
         test_dataset = test_dataset.prefetch(nprefectch)
 
-    test_iterator = tf.data.Iterator.from_structure(test_dataset.output_types,
+    test_iterator = tf.compat.v1.data.Iterator.from_structure(test_dataset.output_types,
                                                     test_dataset.output_shapes)
     test_iterator_init_op = test_iterator.make_initializer(test_dataset)
 
     test_iterator_handle = sess.run(test_iterator.string_handle())
 
-    handle = tf.placeholder(tf.string, shape=[], name = "handle_name_iterator")
-    iterator = tf.data.Iterator.from_string_handle(
+    handle = tf.compat.v1.placeholder(tf.string, shape=[], name = "handle_name_iterator")
+    iterator = tf.compat.v1.data.Iterator.from_string_handle(
             handle, train_iterator.output_types, output_shapes = train_iterator.output_shapes)
 
 
@@ -492,14 +492,14 @@ e.g. sea points for sea surface temperature.
     enc_avgpool[0] = inputs_
 
     for l in range(1,enc_nlayers):
-        enc_conv[l] = tf.layers.conv2d(enc_avgpool[l-1],
+        enc_conv[l] = tf.compat.v1.layers.conv2d(enc_avgpool[l-1],
                                        enc_ksize[l],
                                        (3,3),
                                        padding='same',
                                        activation=tf.nn.leaky_relu)
         print("encoder: output size of convolutional layer: ",l,enc_conv[l].shape)
 
-        enc_avgpool[l] = tf.layers.average_pooling2d(enc_conv[l],
+        enc_avgpool[l] = tf.compat.v1.layers.average_pooling2d(enc_conv[l],
                                                      (2,2),
                                                      (2,2),
                                                      padding='same')
@@ -509,7 +509,7 @@ e.g. sea points for sea surface temperature.
         enc_last = enc_avgpool[-1]
 
     # default is no drop-out
-    dropout_rate = tf.placeholder_with_default(0.0, shape=())
+    dropout_rate = tf.compat.v1.placeholder_with_default(0.0, shape=())
 
     if len(frac_dense_layer) == 0:
         dense_2d = enc_last
@@ -529,13 +529,13 @@ e.g. sea points for sea surface temperature.
         dense[0] = avgpool_flat
 
         for i in range(2*len(frac_dense_layer)):
-            dense[2*i+1] = tf.layers.dense(inputs=dense[2*i],
+            dense[2*i+1] = tf.compat.v1.layers.dense(inputs=dense[2*i],
                                            units=dense_units[i],
                                            activation=tf.nn.relu)
             print("dense layer: output units: ",i,dense[2*i+1].shape)
-            dense[2*i+2] = tf.layers.dropout(inputs=dense[2*i+1], rate=dropout_rate)
+            dense[2*i+2] = tf.compat.v1.layers.dropout(inputs=dense[2*i+1], rate=dropout_rate)
 
-        dense_2d = tf.reshape(dense[-1], tf.shape(enc_last))
+        dense_2d = tf.reshape(dense[-1], tf.shape(input=enc_last))
 
     ### Decoder
     dec_conv = [None] * enc_nlayers
@@ -546,7 +546,7 @@ e.g. sea points for sea surface temperature.
     for l in range(1,enc_nlayers):
         l2 = enc_nlayers-l
 
-        dec_upsample[l] = tf.image.resize_images(
+        dec_upsample[l] = tf.image.resize(
             dec_conv[l-1],
             enc_conv[l2].shape[1:3],
             method=resize_method)
@@ -558,7 +558,7 @@ e.g. sea points for sea surface temperature.
             dec_upsample[l] = tf.concat([dec_upsample[l],enc_avgpool[l2-1]],3)
             print("decoder: output size of concatenation: ",l,dec_upsample[l].shape)
 
-        dec_conv[l] = tf.layers.conv2d(
+        dec_conv[l] = tf.compat.v1.layers.conv2d(
             dec_upsample[l],
             enc_ksize[l2-1],
             (3,3),
@@ -584,7 +584,7 @@ e.g. sea points for sea surface temperature.
 
     difference = m_rec - m_true
 
-    mask_issea = tf.placeholder(
+    mask_issea = tf.compat.v1.placeholder(
         tf.float32,
         shape = (mask.shape[0], mask.shape[1]),
         name = "mask_issea")
@@ -594,7 +594,7 @@ e.g. sea points for sea surface temperature.
     mask_noncloud = tf.cast(tf.math.logical_not(tf.equal(xtrue[:,:,:,1], 0)),
                             xtrue.dtype)
 
-    n_noncloud = tf.reduce_sum(mask_noncloud)
+    n_noncloud = tf.reduce_sum(input_tensor=mask_noncloud)
 
     if truth_uncertain:
         # KL divergence between two univariate Gaussians p and q
@@ -605,35 +605,35 @@ e.g. sea points for sea surface temperature.
         # 2 KL(p,q) = log(σ2_2) - log(σ2_1) + (σ2_1 + (\mu_1 - \mu_2)^2)/(σ2_2) - 1
         # 2 KL(p_true,q_rec) = log(σ2_rec/σ2_true) + (σ2_true + (\mu_rec - \mu_true)^2)/(σ2_rec) - 1
 
-        cost = (tf.reduce_sum(tf.multiply(
-            tf.log(σ2_rec/σ2_true) + (σ2_true + difference**2) / σ2_rec,mask_noncloud))) / n_noncloud
+        cost = (tf.reduce_sum(input_tensor=tf.multiply(
+            tf.math.log(σ2_rec/σ2_true) + (σ2_true + difference**2) / σ2_rec,mask_noncloud))) / n_noncloud
     else:
-        cost = (tf.reduce_sum(tf.multiply(tf.log(σ2_rec),mask_noncloud)) +
-            tf.reduce_sum(tf.multiply(difference**2 / σ2_rec,mask_noncloud))) / n_noncloud
+        cost = (tf.reduce_sum(input_tensor=tf.multiply(tf.math.log(σ2_rec),mask_noncloud)) +
+            tf.reduce_sum(input_tensor=tf.multiply(difference**2 / σ2_rec,mask_noncloud))) / n_noncloud
 
 
     # L2 regularization of weights
     if regularization_L2_beta != 0:
-        trainable_variables   = tf.trainable_variables()
+        trainable_variables   = tf.compat.v1.trainable_variables()
         lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in trainable_variables
                             if 'bias' not in v.name ]) * regularization_L2_beta
         cost = cost + lossL2
 
-    RMS = tf.sqrt(tf.reduce_sum(tf.multiply(difference**2,mask_noncloud))
+    RMS = tf.sqrt(tf.reduce_sum(input_tensor=tf.multiply(difference**2,mask_noncloud))
                   / n_noncloud)
 
     # to debug
     # cost = RMS
 
     if tensorboard:
-        with tf.name_scope('Validation'):
-            tf.summary.scalar('RMS', RMS)
-            tf.summary.scalar('cost', cost)
-            tf.summary.image("m_rec",tf.expand_dims(
+        with tf.compat.v1.name_scope('Validation'):
+            tf.compat.v1.summary.scalar('RMS', RMS)
+            tf.compat.v1.summary.scalar('cost', cost)
+            tf.compat.v1.summary.image("m_rec",tf.expand_dims(
                 tf.reverse(tf.multiply(m_rec,mask_issea),[1]),-1))
-            tf.summary.image("m_true",tf.expand_dims(
+            tf.compat.v1.summary.image("m_true",tf.expand_dims(
                 tf.reverse(tf.multiply(m_true,mask_issea),[1]),-1))
-            tf.summary.image("sigma2_rec",tf.expand_dims(
+            tf.compat.v1.summary.image("sigma2_rec",tf.expand_dims(
                 tf.reverse(tf.multiply(σ2_rec,mask_issea),[1]),-1))
 
     # parameters for Adam optimizer (default values)
@@ -648,9 +648,9 @@ e.g. sea points for sea surface temperature.
     #                                                      global_step,
     #                                                      50, 0.96, staircase=True)
 
-    learning_rate_ = tf.placeholder(tf.float32, shape=[])
+    learning_rate_ = tf.compat.v1.placeholder(tf.float32, shape=[])
 
-    optimizer = tf.train.AdamOptimizer(learning_rate_,beta1,beta2,epsilon)
+    optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate_,beta1,beta2,epsilon)
     gradients, variables = zip(*optimizer.compute_gradients(cost))
     gradients, _ = tf.clip_by_global_norm(gradients, clip_grad)
     opt = optimizer.apply_gradients(zip(gradients, variables))
@@ -668,10 +668,10 @@ e.g. sea points for sea surface temperature.
     print(dt_start)
 
     if tensorboard:
-        merged = tf.summary.merge_all()
-        train_writer = tf.summary.FileWriter(outdir + '/train',
+        merged = tf.compat.v1.summary.merge_all()
+        train_writer = tf.compat.v1.summary.FileWriter(outdir + '/train',
                                           sess.graph)
-        test_writer = tf.summary.FileWriter(outdir + '/test')
+        test_writer = tf.compat.v1.summary.FileWriter(outdir + '/test')
     else:
         # unused
         merged = tf.constant(0.0, shape=[1], dtype="float32")
@@ -679,10 +679,10 @@ e.g. sea points for sea surface temperature.
     index = 0
 
     print("init")
-    sess.run(tf.global_variables_initializer())
+    sess.run(tf.compat.v1.global_variables_initializer())
     logger.debug('init done')
 
-    saver = tf.train.Saver()
+    saver = tf.compat.v1.train.Saver()
 
     # final output file name
     fname = None
