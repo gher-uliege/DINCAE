@@ -1317,11 +1317,13 @@ reconstruct missing data in satellite observations.</p>
                 <span class="n">nvar</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
                 <span class="n">enc_ksize_internal</span> <span class="o">=</span> <span class="p">[</span><span class="mi">16</span><span class="p">,</span><span class="mi">24</span><span class="p">,</span><span class="mi">36</span><span class="p">,</span><span class="mi">54</span><span class="p">],</span>
                 <span class="n">clip_grad</span> <span class="o">=</span> <span class="mf">5.0</span><span class="p">,</span>
-                <span class="n">regularization_L2_beta</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">regularization_L2_beta</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+                <span class="n">iseed</span> <span class="o">=</span> <span class="bp">None</span>
 <span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Train a neural network to reconstruct missing data using the training data set</span>
-<span class="sd">and periodically run the neural network on the test dataset.</span>
+<span class="sd">and periodically run the neural network on the test dataset. The function returns the</span>
+<span class="sd">filename of the latest reconstruction.</span>
 
 <span class="sd">## Parameters</span>
 
@@ -1341,7 +1343,7 @@ reconstruct missing data in satellite observations.</p>
 <span class="sd"> * `resize_method`: one of the resize methods defined in [TensorFlow](https://www.tensorflow.org/api_docs/python/tf/image/resize_images)</span>
 <span class="sd"> * `epochs`: number of epochs for training the neural network</span>
 <span class="sd"> * `batch_size`: size of a mini-batch</span>
-<span class="sd"> * `save_each`: reconstruct the missing data every `save_each` epoch</span>
+<span class="sd"> * `save_each`: reconstruct the missing data every `save_each` epoch. Repeated saving is disabled if `save_each` is zero. The last epoch is always saved.</span>
 <span class="sd"> * `save_model_each`: save a checkpoint of the neural network every</span>
 <span class="sd">      `save_model_each` epoch</span>
 <span class="sd"> * `skipconnections`: list of indices of convolutional layers with</span>
@@ -1357,6 +1359,13 @@ reconstruct missing data in satellite observations.</p>
 <span class="sd"> * `regularization_L2_beta`: scalar to enforce L2 regularization on the weight</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
+    <span class="k">if</span> <span class="n">iseed</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">iseed</span><span class="p">)</span>
+        <span class="n">tf</span><span class="o">.</span><span class="n">set_random_seed</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="o">**</span><span class="mi">32</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="o">**</span><span class="mi">32</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;regularization_L2_beta &quot;</span><span class="p">,</span><span class="n">regularization_L2_beta</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;enc_ksize_internal &quot;</span><span class="p">,</span><span class="n">enc_ksize_internal</span><span class="p">)</span>
     <span class="n">enc_ksize</span> <span class="o">=</span> <span class="p">[</span><span class="n">nvar</span><span class="p">]</span> <span class="o">+</span> <span class="n">enc_ksize_internal</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">outdir</span><span class="p">):</span>
@@ -1569,6 +1578,9 @@ reconstruct missing data in satellite observations.</p>
 
     <span class="n">saver</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">Saver</span><span class="p">()</span>
 
+    <span class="c1"># final output file name</span>
+    <span class="n">fname</span> <span class="o">=</span> <span class="bp">None</span>
+
     <span class="c1"># loop over epochs</span>
     <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
 
@@ -1592,7 +1604,7 @@ reconstruct missing data in satellite observations.</p>
                       <span class="s2">&quot;Training loss: {:.4f}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">batch_cost</span><span class="p">),</span>
                       <span class="s2">&quot;RMS: {:.4f}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">batch_RMS</span><span class="p">))</span>
 
-        <span class="k">if</span> <span class="n">e</span> <span class="o">%</span> <span class="n">save_each</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">e</span> <span class="o">==</span> <span class="n">epochs</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="ow">or</span> <span class="p">((</span><span class="n">save_each</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">e</span> <span class="o">%</span> <span class="n">save_each</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)):</span>
             <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Save output&quot;</span><span class="p">,</span><span class="n">e</span><span class="p">)</span>
 
             <span class="n">timestr</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H%M%S&quot;</span><span class="p">)</span>
@@ -1612,15 +1624,18 @@ reconstruct missing data in satellite observations.</p>
                 <span class="n">savesample</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span><span class="n">batch_m_rec</span><span class="p">,</span><span class="n">batch_σ2_rec</span><span class="p">,</span><span class="n">meandata</span><span class="p">,</span><span class="n">lon</span><span class="p">,</span><span class="n">lat</span><span class="p">,</span><span class="n">e</span><span class="p">,</span><span class="n">ii</span><span class="p">,</span>
                            <span class="n">offset</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">e</span> <span class="o">%</span> <span class="n">save_model_each</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">save_model_each</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">e</span> <span class="o">%</span> <span class="n">save_model_each</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
             <span class="n">save_path</span> <span class="o">=</span> <span class="n">saver</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">sess</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
                 <span class="n">outdir</span><span class="p">,</span><span class="s2">&quot;model-{:03d}.ckpt&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="o">+</span><span class="mi">1</span><span class="p">)))</span>
+
+    <span class="c1"># free all resources associated with the session</span>
+    <span class="n">sess</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
     <span class="n">dt_end</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
     <span class="k">print</span><span class="p">(</span><span class="n">dt_end</span><span class="p">)</span>
     <span class="k">print</span><span class="p">(</span><span class="n">dt_end</span> <span class="o">-</span> <span class="n">dt_start</span><span class="p">)</span>
 
-
+    <span class="k">return</span> <span class="n">fname</span>
 
 <span class="k">def</span> <span class="nf">reconstruct_gridded_nc</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span><span class="n">varname</span><span class="p">,</span><span class="n">outdir</span><span class="p">,</span>
                            <span class="n">jitter_std</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
@@ -1634,6 +1649,7 @@ reconstruct missing data in satellite observations.</p>
 <span class="sd">`DINCAE.load_gridded_nc` for the NetCDF format.</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
+
     <span class="n">lon</span><span class="p">,</span><span class="n">lat</span><span class="p">,</span><span class="n">time</span><span class="p">,</span><span class="n">data</span><span class="p">,</span><span class="n">missing</span><span class="p">,</span><span class="n">mask</span> <span class="o">=</span> <span class="n">load_gridded_nc</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span><span class="n">varname</span><span class="p">)</span>
     <span class="n">train_datagen</span><span class="p">,</span><span class="n">train_len</span><span class="p">,</span><span class="n">meandata</span> <span class="o">=</span> <span class="n">data_generator</span><span class="p">(</span>
         <span class="n">lon</span><span class="p">,</span><span class="n">lat</span><span class="p">,</span><span class="n">time</span><span class="p">,</span><span class="n">data</span><span class="p">,</span><span class="n">missing</span><span class="p">,</span>
@@ -1844,14 +1860,15 @@ variables:
       
   <div class="item">
     <div class="name def" id="DINCAE.reconstruct">
-    <p>def <span class="ident">reconstruct</span>(</p><p>lon, lat, mask, meandata, train_datagen, train_len, test_datagen, test_len, outdir, resize_method=1, epochs=1000, batch_size=30, save_each=10, save_model_each=500, skipconnections=[1, 2, 3, 4], dropout_rate_train=0.3, tensorboard=False, truth_uncertain=False, shuffle_buffer_size=45, nvar=10, enc_ksize_internal=[16, 24, 36, 54], clip_grad=5.0, regularization_L2_beta=0)</p>
+    <p>def <span class="ident">reconstruct</span>(</p><p>lon, lat, mask, meandata, train_datagen, train_len, test_datagen, test_len, outdir, resize_method=1, epochs=1000, batch_size=30, save_each=10, save_model_each=500, skipconnections=[1, 2, 3, 4], dropout_rate_train=0.3, tensorboard=False, truth_uncertain=False, shuffle_buffer_size=45, nvar=10, enc_ksize_internal=[16, 24, 36, 54], clip_grad=5.0, regularization_L2_beta=0, iseed=None)</p>
     </div>
     
 
     
   
     <div class="desc"><p>Train a neural network to reconstruct missing data using the training data set
-and periodically run the neural network on the test dataset.</p>
+and periodically run the neural network on the test dataset. The function returns the
+filename of the latest reconstruction.</p>
 <h2>Parameters</h2>
 <ul>
 <li><code>lon</code>: longitude in degrees East</li>
@@ -1870,7 +1887,7 @@ e.g. sea points for sea surface temperature.</li>
 <li><code>resize_method</code>: one of the resize methods defined in <a href="https://www.tensorflow.org/api_docs/python/tf/image/resize_images">TensorFlow</a></li>
 <li><code>epochs</code>: number of epochs for training the neural network</li>
 <li><code>batch_size</code>: size of a mini-batch</li>
-<li><code>save_each</code>: reconstruct the missing data every <code>save_each</code> epoch</li>
+<li><code>save_each</code>: reconstruct the missing data every <code>save_each</code> epoch. Repeated saving is disabled if <code>save_each</code> is zero. The last epoch is always saved.</li>
 <li><code>save_model_each</code>: save a checkpoint of the neural network every
       <code>save_model_each</code> epoch</li>
 <li><code>skipconnections</code>: list of indices of convolutional layers with
@@ -1905,11 +1922,13 @@ e.g. sea points for sea surface temperature.</li>
                 <span class="n">nvar</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
                 <span class="n">enc_ksize_internal</span> <span class="o">=</span> <span class="p">[</span><span class="mi">16</span><span class="p">,</span><span class="mi">24</span><span class="p">,</span><span class="mi">36</span><span class="p">,</span><span class="mi">54</span><span class="p">],</span>
                 <span class="n">clip_grad</span> <span class="o">=</span> <span class="mf">5.0</span><span class="p">,</span>
-                <span class="n">regularization_L2_beta</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">regularization_L2_beta</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+                <span class="n">iseed</span> <span class="o">=</span> <span class="bp">None</span>
 <span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Train a neural network to reconstruct missing data using the training data set</span>
-<span class="sd">and periodically run the neural network on the test dataset.</span>
+<span class="sd">and periodically run the neural network on the test dataset. The function returns the</span>
+<span class="sd">filename of the latest reconstruction.</span>
 
 <span class="sd">## Parameters</span>
 
@@ -1929,7 +1948,7 @@ e.g. sea points for sea surface temperature.</li>
 <span class="sd"> * `resize_method`: one of the resize methods defined in [TensorFlow](https://www.tensorflow.org/api_docs/python/tf/image/resize_images)</span>
 <span class="sd"> * `epochs`: number of epochs for training the neural network</span>
 <span class="sd"> * `batch_size`: size of a mini-batch</span>
-<span class="sd"> * `save_each`: reconstruct the missing data every `save_each` epoch</span>
+<span class="sd"> * `save_each`: reconstruct the missing data every `save_each` epoch. Repeated saving is disabled if `save_each` is zero. The last epoch is always saved.</span>
 <span class="sd"> * `save_model_each`: save a checkpoint of the neural network every</span>
 <span class="sd">      `save_model_each` epoch</span>
 <span class="sd"> * `skipconnections`: list of indices of convolutional layers with</span>
@@ -1945,6 +1964,13 @@ e.g. sea points for sea surface temperature.</li>
 <span class="sd"> * `regularization_L2_beta`: scalar to enforce L2 regularization on the weight</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
+    <span class="k">if</span> <span class="n">iseed</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">iseed</span><span class="p">)</span>
+        <span class="n">tf</span><span class="o">.</span><span class="n">set_random_seed</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="o">**</span><span class="mi">32</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="o">**</span><span class="mi">32</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;regularization_L2_beta &quot;</span><span class="p">,</span><span class="n">regularization_L2_beta</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;enc_ksize_internal &quot;</span><span class="p">,</span><span class="n">enc_ksize_internal</span><span class="p">)</span>
     <span class="n">enc_ksize</span> <span class="o">=</span> <span class="p">[</span><span class="n">nvar</span><span class="p">]</span> <span class="o">+</span> <span class="n">enc_ksize_internal</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">outdir</span><span class="p">):</span>
@@ -2157,6 +2183,9 @@ e.g. sea points for sea surface temperature.</li>
 
     <span class="n">saver</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">Saver</span><span class="p">()</span>
 
+    <span class="c1"># final output file name</span>
+    <span class="n">fname</span> <span class="o">=</span> <span class="bp">None</span>
+
     <span class="c1"># loop over epochs</span>
     <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
 
@@ -2180,7 +2209,7 @@ e.g. sea points for sea surface temperature.</li>
                       <span class="s2">&quot;Training loss: {:.4f}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">batch_cost</span><span class="p">),</span>
                       <span class="s2">&quot;RMS: {:.4f}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">batch_RMS</span><span class="p">))</span>
 
-        <span class="k">if</span> <span class="n">e</span> <span class="o">%</span> <span class="n">save_each</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">e</span> <span class="o">==</span> <span class="n">epochs</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="ow">or</span> <span class="p">((</span><span class="n">save_each</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">e</span> <span class="o">%</span> <span class="n">save_each</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)):</span>
             <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Save output&quot;</span><span class="p">,</span><span class="n">e</span><span class="p">)</span>
 
             <span class="n">timestr</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H%M%S&quot;</span><span class="p">)</span>
@@ -2200,13 +2229,18 @@ e.g. sea points for sea surface temperature.</li>
                 <span class="n">savesample</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span><span class="n">batch_m_rec</span><span class="p">,</span><span class="n">batch_σ2_rec</span><span class="p">,</span><span class="n">meandata</span><span class="p">,</span><span class="n">lon</span><span class="p">,</span><span class="n">lat</span><span class="p">,</span><span class="n">e</span><span class="p">,</span><span class="n">ii</span><span class="p">,</span>
                            <span class="n">offset</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">e</span> <span class="o">%</span> <span class="n">save_model_each</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">save_model_each</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">e</span> <span class="o">%</span> <span class="n">save_model_each</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
             <span class="n">save_path</span> <span class="o">=</span> <span class="n">saver</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">sess</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
                 <span class="n">outdir</span><span class="p">,</span><span class="s2">&quot;model-{:03d}.ckpt&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="o">+</span><span class="mi">1</span><span class="p">)))</span>
+
+    <span class="c1"># free all resources associated with the session</span>
+    <span class="n">sess</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
     <span class="n">dt_end</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
     <span class="k">print</span><span class="p">(</span><span class="n">dt_end</span><span class="p">)</span>
     <span class="k">print</span><span class="p">(</span><span class="n">dt_end</span> <span class="o">-</span> <span class="n">dt_start</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">fname</span>
 </pre></div>
 
   </div>
@@ -2244,6 +2278,7 @@ See <a href="#DINCAE.reconstruct"><code>reconstruct</code></a> for other keyword
 <span class="sd">`DINCAE.load_gridded_nc` for the NetCDF format.</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
+
     <span class="n">lon</span><span class="p">,</span><span class="n">lat</span><span class="p">,</span><span class="n">time</span><span class="p">,</span><span class="n">data</span><span class="p">,</span><span class="n">missing</span><span class="p">,</span><span class="n">mask</span> <span class="o">=</span> <span class="n">load_gridded_nc</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span><span class="n">varname</span><span class="p">)</span>
     <span class="n">train_datagen</span><span class="p">,</span><span class="n">train_len</span><span class="p">,</span><span class="n">meandata</span> <span class="o">=</span> <span class="n">data_generator</span><span class="p">(</span>
         <span class="n">lon</span><span class="p">,</span><span class="n">lat</span><span class="p">,</span><span class="n">time</span><span class="p">,</span><span class="n">data</span><span class="p">,</span><span class="n">missing</span><span class="p">,</span>
