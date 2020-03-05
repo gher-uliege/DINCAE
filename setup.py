@@ -12,6 +12,11 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/gher-ulg/DINCAE",
     packages=setuptools.find_packages(),
+    install_requires=[
+        "netCDF4>=1.4.2",
+        "numpy>=1.15.4",
+        "tensorflow==1.12",
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GPL-3",
