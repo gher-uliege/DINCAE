@@ -52,5 +52,5 @@ def test_SST():
         print("loss equal ",loss[-1] == refloss[tf.__version__])
         assert abs(loss[-1] - refloss[tf.__version__]) < 0.2
     else:
-        print("warning: no reference value for version tensorflow " * tf.__version__)
+        print("warning: no reference value for version tensorflow " + tf.__version__)
         assert loss[-1] < 2
