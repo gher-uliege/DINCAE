@@ -15,7 +15,7 @@ install:
 
 # command to run tests
 script:
-  - pytest --cov=./
+  - pytest --cov=./ --verbose
 
 # submit coverage
 after_success:
