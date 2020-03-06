@@ -1,6 +1,8 @@
 [run]
 branch = True
-source = DINCAE
+source = 
+    DINCAE
+    **/site-packages/DINCAE
 
 [report]
 exclude_lines =
