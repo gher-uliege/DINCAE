@@ -34,7 +34,7 @@ using Dates
 using Random
 using Printf
 using Statistics
-using TensorFlow
+#using TensorFlow
 
 import Base: length
 import Base: size
@@ -92,11 +92,11 @@ function load_gridded_nc(fname,varname)
     ds = Dataset(fname);
     lon = nomissing(ds["lon"][:])
     lat = nomissing(ds["lat"][:])
-    #time = nomissing(ds["time"][:])
-    #data = nomissing(ds[varname][:,:,:],NaN)
+    time = nomissing(ds["time"][:])
+    data = nomissing(ds[varname][:,:,:],NaN)
 
-    time = nomissing(ds["time"][1:10])
-    data = nomissing(ds[varname][:,:,1:10],NaN)
+    #time = nomissing(ds["time"][1:100])
+    #data = nomissing(ds[varname][:,:,1:100],NaN)
 
     mask = nomissing(ds["mask"][:,:]) .== 1;
 
@@ -139,7 +139,7 @@ function data_generator(lon,lat,time,data_full,missingmask;
 
     x = zeros(Float32,(sz[1],sz[2],sz[3],6))
 
-    x[:,:,:,2] = (1 .- isfinite.(data)) / (obs_err_std^2)  # error variance
+    x[:,:,:,2] = (1 .- isnan.(data)) / (obs_err_std^2)  # inv error variance
     x[:,:,:,1] = replace(data,NaN => 0) / (obs_err_std^2)
 
     # scale between -1 and 1
@@ -219,8 +219,9 @@ function NCData(lon,lat,time,data_full,missingmask;
                 train = true,
                 obs_err_std = 1.,
                 jitter_std = 0.05)
-    meandata = mean(data_full,dims = 3)
+    meandata = sum(x -> (isnan(x) ? zero(x) : x),data_full,dims = 3) ./ sum(.!isnan,data_full,dims = 3)
 
+    @show extrema(data_full[:,:,1][isfinite.(data_full[:,:,1])])
     ntime = size(data_full,3)
 
 
@@ -229,12 +230,14 @@ function NCData(lon,lat,time,data_full,missingmask;
     dayofyear_sin = sin.(dayofyear/365.25)
 
     data = data_full .- meandata
+    @show extrema(data[:,:,1,1])
+    @show data[98,1,1]
 
     sz = size(data)
 
     x = zeros(Float32,(sz[1],sz[2],sz[3],6))
 
-    x[:,:,:,2] = (1 .- isfinite.(data)) / (obs_err_std^2)  # error variance
+    x[:,:,:,2] = (1 .- isnan.(data)) / (obs_err_std^2)  # inv. error variance
     x[:,:,:,1] = replace(data,NaN => 0) / (obs_err_std^2)
 
     # scale between -1 and 1
@@ -259,6 +262,8 @@ function Base.getindex(dd::NCData,i::Integer)
     xin[:,:,7:8]  = dd.x[:,:,max(1,i-1),1:2] # previous
     xin[:,:,9:10] = dd.x[:,:,min(sz[3],i+1),1:2] # next
 
+#    @show i,extrema(dd.x[:,:,i,1])
+#    error("lol")
     # add missing data during training randomly
     if dd.train
         imask = rand(1:size(dd.missingmask,3))
@@ -276,18 +281,23 @@ function Base.getindex(dd::NCData,i::Integer)
     return (xin,dd.x[:,:,i,1:2])
 end
 
-#=
-function savesample(fname,batch_m_rec,batch_σ2_rec,meandata,lon,lat,e,ii,offset)
+
+function savesample(fname,varname,xrec,meandata,lon,lat,ii,offset)
     fill_value = -9999.
-    recdata = batch_m_rec # + meandata;
+    batch_m_rec = xrec[:,:,1,:]
+    batch_σ2_rec = xrec[:,:,2,:]
+
+    recdata = batch_m_rec .+ meandata
     batch_sigma_rec = sqrt.(batch_σ2_rec)
+
+    batch_sigma_rec[isnan.(recdata)] .= NaN
 
     if ii == 0
         # create file
-        ds = Dataset(fname, "w")
+        ds = Dataset(fname, "c")
 
         # dimensions
-        defDim(ds,"time") = Inf
+        defDim(ds,"time", Inf)
         defDim(ds,"lon", length(lon))
         defDim(ds,"lat", length(lat))
 
@@ -296,39 +306,41 @@ function savesample(fname,batch_m_rec,batch_σ2_rec,meandata,lon,lat,e,ii,offset
         nc_lat = defVar(ds,"lat", Float32, ("lat",))
         nc_meandata = defVar(
             ds,
-            "meandata", Float32, ("lat","lon"),
-            fill_value=fill_value)
+            varname * "_mean", Float32, ("lon","lat"),
+            fillvalue=fill_value)
 
         nc_batch_m_rec = defVar(
             ds,
-            "batch_m_rec", Float32, ("time", "lat", "lon"),
-            fill_value=fill_value)
+            varname, Float32, ("lon","lat","time"),
+            fillvalue=fill_value)
 
         nc_batch_sigma_rec = defVar(
             ds,
-            "batch_sigma_rec", Float32, ("time", "lat", "lon",),
-            fill_value=fill_value)
+            varname * "_error", Float32, ("lon","lat","time"),
+            fillvalue=fill_value)
 
         # data
         nc_lon[:] = lon
         nc_lat[:] = lat
-        nc_meandata[:,:] = meandata
+        nc_meandata[:,:] = replace(meandata, NaN => missing);
     else
         # append to file
         ds = Dataset(fname, "a")
-        nc_batch_m_rec = ds.variables["batch_m_rec"]
-        nc_batch_sigma_rec = ds.variables["batch_sigma_rec"]
+        nc_batch_m_rec = ds[varname]
+        nc_batch_sigma_rec = ds[varname * "_error"]
     end
 
     for n in 1:size(batch_m_rec,3)
         # add mask
-        nc_batch_m_rec[:,:,n+offset] = batch_m_rec[:,:,n]
-        nc_batch_sigma_rec[:,:,n+offset] = batch_sigma_rec[:,:,n]
+        #nc_batch_m_rec[:,:,n+offset] = replace(recdata[:,:,n], NaN => missing)
+        #nc_batch_sigma_rec[:,:,n+offset] = replace(batch_sigma_rec[:,:,n], NaN => missing)
+        nc_batch_m_rec.var[:,:,n+offset] = replace(recdata[:,:,n], NaN => fill_value)
+        nc_batch_sigma_rec.var[:,:,n+offset] = replace(batch_sigma_rec[:,:,n], NaN => fill_value)
     end
 
     close(ds)
 end
-=#
+
 
 
 
