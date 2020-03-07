@@ -6,16 +6,15 @@ python:
 before_install:
   - python --version
   - pip install -U pip
-  - pip install -U pytest
-  - pip install -U pytest-cov
-  - pip install codecov
 
 install:
   - pip install ".[test]" . # install package + test dependencies
+  - pip install -e .  # develop package
+  - pip list
 
 # command to run tests
 script:
-  - PYTHONPATH="." pytest --cov=DINCAE --verbose
+  - pytest --cov=. --verbose
 
 # submit coverage
 after_success:

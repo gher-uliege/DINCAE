@@ -3,6 +3,7 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+
 setuptools.setup(
     name="DINCAE", # Replace with your own username
     version="1.0.0",
@@ -17,6 +18,12 @@ setuptools.setup(
         "numpy>=1.15.4",
         "tensorflow==1.15.2",
     ],
+    extras_require= {
+        "test": [ "pytest-cov",
+                  "codecov",
+                  "pytest",
+        ]
+    },
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GPL-3",
