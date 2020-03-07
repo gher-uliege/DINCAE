@@ -10,15 +10,29 @@ import os
 import urllib.request
 
 
-def test_SST():
-    #resize_method = tf.image.ResizeMethod.BILINEAR
-    resize_method = tf.image.ResizeMethod.NEAREST_NEIGHBOR
+def test_load():
     filename = "avhrr_sub_add_clouds.nc"
+    varname = "SST"
 
     if not os.path.isfile(filename):
        urllib.request.urlretrieve("https://dox.ulg.ac.be/index.php/s/C7rwJ9goIRpvEcC/download", filename)
 
+    lon,lat,time,data,missing,mask = DINCAE.load_gridded_nc(filename,varname)
+
+    train_datagen,nvar,train_len,meandata = DINCAE.data_generator(
+        lon,lat,time,data,missing)
+
+    (xin,xtrue) = next(train_datagen())
+
+def test_SST():
+    #resize_method = tf.image.ResizeMethod.BILINEAR
+    resize_method = tf.image.ResizeMethod.NEAREST_NEIGHBOR
+    filename = "avhrr_sub_add_clouds.nc"
     varname = "SST"
+
+    if not os.path.isfile(filename):
+       urllib.request.urlretrieve("https://dox.ulg.ac.be/index.php/s/C7rwJ9goIRpvEcC/download", filename)
+
     outdir = None
 
     iseed = 12345
