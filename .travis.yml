@@ -15,7 +15,7 @@ install:
 
 # command to run tests
 script:
-  - pytest --cov=DINCAE --verbose
+  - PYTHONPATH="." pytest --cov=DINCAE --verbose
 
 # submit coverage
 after_success:
