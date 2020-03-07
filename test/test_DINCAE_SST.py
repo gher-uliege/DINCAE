@@ -29,7 +29,7 @@ def test_SST():
                                   resize_method = resize_method,
                                   iseed = iseed,
                                   epochs = epochs,
-                                  save_each = -10000000000,
+                                  save_each = 1,
                                   loss = loss,
     )
 
