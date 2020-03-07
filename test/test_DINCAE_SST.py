@@ -24,22 +24,17 @@ def test_load():
     (xin,xtrue) = next(train_datagen())
 
 def test_SST():
-    #resize_method = tf.image.ResizeMethod.BILINEAR
-    resize_method = tf.image.ResizeMethod.NEAREST_NEIGHBOR
     filename = "avhrr_sub_add_clouds.nc"
     varname = "SST"
-
-    if not os.path.isfile(filename):
-       urllib.request.urlretrieve("https://dox.ulg.ac.be/index.php/s/C7rwJ9goIRpvEcC/download", filename)
-
     outdir = "temp-result"
-
     iseed = 12345
     epochs = 1
     loss = []
 
+    if not os.path.isfile(filename):
+       urllib.request.urlretrieve("https://dox.ulg.ac.be/index.php/s/C7rwJ9goIRpvEcC/download", filename)
+
     DINCAE.reconstruct_gridded_nc(filename,varname,outdir,
-                                  resize_method = resize_method,
                                   iseed = iseed,
                                   epochs = epochs,
                                   save_each = 1,
