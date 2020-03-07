@@ -10,11 +10,11 @@ import os
 import urllib.request
 
 def test_load():
-    filename = "avhrr_sub_add_clouds.nc"
+    filename = "avhrr_sub_add_clouds_small.nc"
     varname = "SST"
 
     if not os.path.isfile(filename):
-       urllib.request.urlretrieve("https://dox.ulg.ac.be/index.php/s/C7rwJ9goIRpvEcC/download", filename)
+       urllib.request.urlretrieve("https://dox.ulg.ac.be/index.php/s/b3DWpYysuw6itOz/download", filename)
 
     lon,lat,time,data,missing,mask = DINCAE.load_gridded_nc(filename,varname)
 
@@ -67,6 +67,34 @@ def reference_reconstruct_gridded_nc():
     else:
         print("warning: no reference value for version tensorflow " + tf.__version__)
         assert loss[-1] < 2
+
+
+def test_reconstruct_gridded_nc():
+    filename = "avhrr_sub_add_clouds_small.nc"
+    varname = "SST"
+    outdir = "temp-result"
+    iseed = 12345
+    epochs = 1
+    loss = []
+
+    if not os.path.isfile(filename):
+       urllib.request.urlretrieve("https://dox.ulg.ac.be/index.php/s/b3DWpYysuw6itOz/download", filename)
+
+    DINCAE.reconstruct_gridded_nc(filename,varname,outdir,
+                                  iseed = iseed,
+                                  epochs = epochs,
+                                  save_each = 1,
+                                  tensorboard = True,
+                                  nprefetch = 1,
+                                  nepoch_keep_missing = 10,
+                                  truth_uncertain = True,
+                                  regularization_L2_beta = 0.001,
+                                  loss = loss,
+    )
+
+
+    print("Last training loss: {:.30f}".format(loss[-1]))
+    assert loss[-1] < 18
 
 
 def test_reconstruct_gridded_files():
