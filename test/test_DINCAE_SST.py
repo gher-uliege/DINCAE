@@ -39,6 +39,10 @@ def test_reconstruct_gridded_nc():
                                   epochs = epochs,
                                   save_each = 1,
                                   tensorboard = True,
+                                  nprefetch = 1,
+                                  nepoch_keep_missing = 10,
+                                  truth_uncertain = True,
+                                  regularization_L2_beta = 0.001,
                                   loss = loss,
     )
 
