@@ -50,23 +50,6 @@ __all__ = ["reconstruct","load_gridded_nc","data_generator","reconstruct_gridded
 def identity(x):
     return x
 
-
-def variable_summaries(var):
-    """
-Attach several diagnostics (mean, std. dev., ..) of the variable `var`
-summaries to a Tensor graph (for TensorBoard visualization)
-"""
-    with tf.compat.v1.name_scope('summaries'):
-      mean = tf.reduce_mean(input_tensor=var)
-      tf.compat.v1.summary.scalar('mean', mean)
-      with tf.compat.v1.name_scope('stddev'):
-        stddev = tf.sqrt(tf.reduce_mean(input_tensor=tf.square(var - mean)))
-      tf.compat.v1.summary.scalar('stddev', stddev)
-      tf.compat.v1.summary.scalar('max', tf.reduce_max(input_tensor=var))
-      tf.compat.v1.summary.scalar('min', tf.reduce_min(input_tensor=var))
-      tf.compat.v1.summary.histogram('histogram', var)
-
-
 def load_gridded_nc(fname,varname, minfrac = 0.05):
     """
 Load the variable `varname` from the NetCDF file `fname`. The variable `lon` is
