@@ -9,7 +9,6 @@ import tensorflow as tf
 import os
 import urllib.request
 
-
 def test_load():
     filename = "avhrr_sub_add_clouds.nc"
     varname = "SST"
@@ -33,7 +32,7 @@ def test_SST():
     if not os.path.isfile(filename):
        urllib.request.urlretrieve("https://dox.ulg.ac.be/index.php/s/C7rwJ9goIRpvEcC/download", filename)
 
-    outdir = None
+    outdir = "temp-result"
 
     iseed = 12345
     epochs = 1
