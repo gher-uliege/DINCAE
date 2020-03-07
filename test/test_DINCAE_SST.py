@@ -23,7 +23,7 @@ def test_load():
 
     (xin,xtrue) = next(train_datagen())
 
-def test_SST():
+def test_reconstruct_gridded_nc():
     filename = "avhrr_sub_add_clouds.nc"
     varname = "SST"
     outdir = "temp-result"
@@ -38,9 +38,56 @@ def test_SST():
                                   iseed = iseed,
                                   epochs = epochs,
                                   save_each = 1,
+                                  tensorboard = True,
                                   loss = loss,
     )
 
+
+    print("Last training loss: {:.30f}".format(loss[-1]))
+
+    refloss = {
+        "1.12.0": 1.610045909881591796875000000000,
+        "1.15.0": 1.074228763580322265625000000000
+        }
+
+
+    if tf.__version__ in refloss:
+        # 1.12 on travis
+        # 1.635820031166076660156250000000
+
+        #1.15 on travis
+        # 0.949220180511474609375000000000
+
+        print("loss equal ",loss[-1] == refloss[tf.__version__])
+        assert abs(loss[-1] - refloss[tf.__version__]) < 0.2
+    else:
+        print("warning: no reference value for version tensorflow " + tf.__version__)
+        assert loss[-1] < 2
+
+
+def test_reconstruct_gridded_files():
+    filename = "avhrr_sub_add_clouds.nc"
+    varname = "SST"
+    outdir = "temp-result"
+    iseed = 12345
+    epochs = 1
+    loss = []
+
+    if not os.path.isfile(filename):
+       urllib.request.urlretrieve("https://dox.ulg.ac.be/index.php/s/C7rwJ9goIRpvEcC/download", filename)
+
+    data = [{
+        "filename": filename,
+        "varname": varname,
+    }]
+
+    DINCAE.reconstruct_gridded_files(
+        data,outdir,
+        iseed = iseed,
+        epochs = epochs,
+        save_each = 1,
+        loss = loss,
+    )
 
     print("Last training loss: {:.30f}".format(loss[-1]))
 
