@@ -335,7 +335,7 @@ def reconstruct(lon,lat,mask,meandata,
                 learning_rate = 1e-3,
                 learning_rate_decay_epoch = 100,
                 iseed = None,
-                nprefectch = 0,
+                nprefetch = 0,
                 loss = [],
                 nepoch_keep_missing = 0,
 ):
@@ -416,9 +416,9 @@ e.g. sea points for sea surface temperature.
         test_datagen, (tf.float32,tf.float32),
         (tf.TensorShape([jmax,imax,nvar]),tf.TensorShape([jmax,imax,2]))).batch(batch_size)
 
-    if nprefectch > 0:
-        train_dataset = train_dataset.prefetch(nprefectch)
-        test_dataset = test_dataset.prefetch(nprefectch)
+    if nprefetch > 0:
+        train_dataset = train_dataset.prefetch(nprefetch)
+        test_dataset = test_dataset.prefetch(nprefetch)
 
     test_iterator = tf.compat.v1.data.Iterator.from_structure(test_dataset.output_types,
                                                     test_dataset.output_shapes)
