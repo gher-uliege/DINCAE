@@ -3,6 +3,7 @@ branch = True
 source = 
     DINCAE
     **/site-packages/DINCAE
+    /home/travis/virtualenv/python*/lib/python3.6/site-packages/DINCAE
 
 [report]
 exclude_lines =
