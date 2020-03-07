@@ -1,9 +1,6 @@
 [run]
 branch = True
-source = 
-    DINCAE
-    **/site-packages/DINCAE
-    /home/travis/virtualenv/python*/lib/python3.6/site-packages/DINCAE
+source = DINCAE
 
 [report]
 exclude_lines =
@@ -13,4 +10,6 @@ exclude_lines =
     if __name__ == .__main__.:
 ignore_errors = True
 omit =
-    test/*
+     test/*
+     run_*.py
+     setup.py
