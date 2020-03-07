@@ -8,20 +8,29 @@ import DINCAE
 import tensorflow as tf
 import os
 import urllib.request
+import pytest
 
-def test_load():
+@pytest.fixture()
+def small_example():
     filename = "avhrr_sub_add_clouds_small.nc"
     varname = "SST"
 
     if not os.path.isfile(filename):
        urllib.request.urlretrieve("https://dox.ulg.ac.be/index.php/s/b3DWpYysuw6itOz/download", filename)
 
+    yield (filename,varname)
+
+
+def test_load(small_example):
+    filename,varname = small_example
     lon,lat,time,data,missing,mask = DINCAE.load_gridded_nc(filename,varname)
 
     train_datagen,nvar,train_len,meandata = DINCAE.data_generator(
         lon,lat,time,data,missing)
 
     (xin,xtrue) = next(train_datagen())
+
+
 
 def reference_reconstruct_gridded_nc():
     filename = "avhrr_sub_add_clouds.nc"
@@ -69,16 +78,12 @@ def reference_reconstruct_gridded_nc():
         assert loss[-1] < 2
 
 
-def test_reconstruct_gridded_nc():
-    filename = "avhrr_sub_add_clouds_small.nc"
-    varname = "SST"
+def test_reconstruct_gridded_nc(small_example):
+    filename,varname = small_example
     outdir = "temp-result"
     iseed = 12345
     epochs = 1
     loss = []
-
-    if not os.path.isfile(filename):
-       urllib.request.urlretrieve("https://dox.ulg.ac.be/index.php/s/b3DWpYysuw6itOz/download", filename)
 
     DINCAE.reconstruct_gridded_nc(filename,varname,outdir,
                                   iseed = iseed,
@@ -97,16 +102,12 @@ def test_reconstruct_gridded_nc():
     assert loss[-1] < 18
 
 
-def test_reconstruct_gridded_files():
-    filename = "avhrr_sub_add_clouds_small.nc"
-    varname = "SST"
+def test_reconstruct_gridded_files(small_example):
+    filename,varname = small_example
     outdir = "temp-result"
     iseed = 12345
     epochs = 5
     loss = []
-
-    if not os.path.isfile(filename):
-       urllib.request.urlretrieve("https://dox.ulg.ac.be/index.php/s/b3DWpYysuw6itOz/download", filename)
 
     data = [{
         "filename": filename,
