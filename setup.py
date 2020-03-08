@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="DINCAE", # Replace with your own username
-    version="1.0.0",
+    version="1.1.0",
     author="Alexander Barth",
     description="DINCAE (Data-Interpolating Convolutional Auto-Encoder) is a neural network to reconstruct missing data in satellite observations",
     long_description=long_description,
