@@ -59,8 +59,5 @@ Copy the template file `run_DINCAE.py` and adapt the filename, variable name and
 The code can be run as follows:
 
 ```bash
-export PYTHONPATH=/path/to/module
 python3 run_DINCAE.py
 ```
-
-`/path/to/module` should be replaced by the directory name containing the file `DINCAE.py`.
