@@ -67,5 +67,5 @@ python3 run_DINCAE.py
 ![Animation](http://data-assimilation.net/upload/Alex/DINCAE/data-avg-DINCAE-AVHRR.gif)
 
 
-More information about this result is given in the [paper](https://www.geosci-model-dev-discuss.net/gmd-2019-128/)
+More information about this result is given in the [linked paper](https://www.geosci-model-dev-discuss.net/gmd-2019-128/).
 
