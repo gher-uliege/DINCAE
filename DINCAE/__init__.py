@@ -419,7 +419,9 @@ e.g. sea points for sea surface temperature.
 
     inputs_,xtrue = iterator.get_next()
 
-
+    # activation function for convolutional layer
+    conv_activation=tf.nn.leaky_relu
+    conv_activation=tf.nn.relu
 
     # Encoder
 
@@ -434,7 +436,7 @@ e.g. sea points for sea surface temperature.
                                        enc_nfilter[l],
                                        (3,3),
                                        padding='same',
-                                       activation=tf.nn.leaky_relu)
+                                       activation=conv_activation)
         print("encoder: output size of convolutional layer: ",l,enc_conv[l].shape)
 
         enc_avgpool[l] = tf.compat.v1.layers.average_pooling2d(enc_conv[l],
@@ -501,7 +503,7 @@ e.g. sea points for sea surface temperature.
             enc_nfilter[l2-1],
             (3,3),
             padding='same',
-            activation=tf.nn.leaky_relu)
+            activation=conv_activation)
 
         print("decoder: output size of convolutional layer: ",l,dec_conv[l].shape)
 
