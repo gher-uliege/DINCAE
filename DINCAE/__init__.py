@@ -309,7 +309,7 @@ def reconstruct(lon,lat,mask,meandata,
                 truth_uncertain = False,
                 shuffle_buffer_size = 3*15,
                 nvar = 10,
-                enc_ksize_internal = [16,24,36,54],
+                enc_nfilter_internal = [16,24,36,54],
                 frac_dense_layer = [0.2],
                 clip_grad = 5.0,
                 regularization_L2_beta = 0,
@@ -355,7 +355,7 @@ e.g. sea points for sea surface temperature.
  * `truth_uncertain`: how certain you are about the perceived truth?
  * `shuffle_buffer_size`: number of images for the shuffle buffer
  * `nvar`: number of input variables
- * `enc_ksize_internal`: kernel sizes for the internal convolutional layers
+ * `enc_nfilter_internal`: number of filters for the internal convolutional layers
       (after the input convolutional layer)
  * `clip_grad`: clip gradient to a maximum L2-norm.
  * `regularization_L2_beta`: scalar to enforce L2 regularization on the weight
@@ -370,11 +370,14 @@ e.g. sea points for sea surface temperature.
         random.seed(np.random.randint(0,2**32-1))
 
     print("regularization_L2_beta ",regularization_L2_beta)
-    print("enc_ksize_internal ",enc_ksize_internal)
+    print("enc_nfilter_internal ",enc_nfilter_internal)
     print("nvar ",nvar)
     print("nepoch_keep_missing ",nepoch_keep_missing)
 
-    enc_ksize = [nvar] + enc_ksize_internal
+    # number of output variables
+    nvarout = 2
+    enc_nfilter = [nvar] + enc_nfilter_internal
+    dec_nfilter = enc_nfilter_internal[::-1] + [nvarout]
 
     if outdir != None:
         if not os.path.isdir(outdir):
@@ -420,7 +423,7 @@ e.g. sea points for sea surface temperature.
 
     # Encoder
 
-    enc_nlayers = len(enc_ksize)
+    enc_nlayers = len(enc_nfilter)
     enc_conv = [None] * enc_nlayers
     enc_avgpool = [None] * enc_nlayers
 
@@ -428,7 +431,7 @@ e.g. sea points for sea surface temperature.
 
     for l in range(1,enc_nlayers):
         enc_conv[l] = tf.compat.v1.layers.conv2d(enc_avgpool[l-1],
-                                       enc_ksize[l],
+                                       enc_nfilter[l],
                                        (3,3),
                                        padding='same',
                                        activation=tf.nn.leaky_relu)
@@ -495,7 +498,7 @@ e.g. sea points for sea surface temperature.
 
         dec_conv[l] = tf.compat.v1.layers.conv2d(
             dec_upsample[l],
-            enc_ksize[l2-1],
+            enc_nfilter[l2-1],
             (3,3),
             padding='same',
             activation=tf.nn.leaky_relu)
