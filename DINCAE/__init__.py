@@ -500,7 +500,7 @@ e.g. sea points for sea surface temperature.
 
         dec_conv[l] = tf.compat.v1.layers.conv2d(
             dec_upsample[l],
-            enc_nfilter[l2-1],
+            dec_nfilter[l],
             (3,3),
             padding='same',
             activation=conv_activation)
