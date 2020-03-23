@@ -76,8 +76,6 @@ python3 run_DINCAE.py
 
 ## Example results
 
-![Animation](http://data-assimilation.net/upload/Alex/DINCAE/data-avg-DINCAE-AVHRR.gif)
-
 [Link to animation](http://data-assimilation.net/upload/Alex/DINCAE/data-avg-DINCAE-AVHRR.gif)
 
 
