@@ -36,6 +36,8 @@ The input data should be in netCDF with the variables:
 * `SST` (or any other varbiable name): the data
 
 
+This is the example output from `ncdump -h`:
+
 ```
 netcdf avhrr_sub_add_clouds {
 dimensions:
@@ -68,4 +70,3 @@ python3 run_DINCAE.py
 
 
 More information about this result is given in the [linked paper](https://www.geosci-model-dev-discuss.net/gmd-2019-128/).
-
