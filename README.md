@@ -55,6 +55,9 @@ variables:
 }
 ```
 
+An example for how to create this file in python is in [https://github.com/gher-ulg/DINCAE/blob/master/examples/create\_input\_file.py](https://github.com/gher-ulg/DINCAE/blob/master/examples/create\_input\_file.py)
+
+
 ## Running DINCAE
 
 Copy the template file `run_DINCAE.py` and adapt the filename, variable name and the output directory and possibly optional arguments for the reconstruction method as mentioned in the [documentation](https://gher-ulg.github.io/DINCAE/).
