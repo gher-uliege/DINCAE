@@ -26,6 +26,11 @@ Tested versions:
 
 You can install those packages either with `pip3` or with `conda`.
 
+
+## Documentation
+
+The document is available at https://gher-ulg.github.io/DINCAE/.
+
 ## Input format
 
 The input data should be in netCDF with the variables:
