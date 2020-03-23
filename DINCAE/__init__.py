@@ -58,6 +58,9 @@ a numpy datetime vector, `data_full` is a 3-d array with the data, `missing`
 is a boolean mask where true means the data is missing and `mask` is a boolean mask
 where true means the data location is valid, e.g. sea points for sea surface temperature.
 
+The mask variable can also be ommited. In this case a grid point is considered valid, if
+the grid point has at least 5% of non-clouded data (parameter `minfrac`).
+
 At the bare-minimum a NetCDF file should have the following variables and
 attributes:
 
