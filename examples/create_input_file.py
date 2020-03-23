@@ -4,7 +4,7 @@ import numpy as np
 # change the variables below with your own data
 
 # the filename
-fname = "input_file_python.nc"
+filename = "input_file_python.nc"
 # the variable name in the netCDF file
 varname = "SST"
 # longitude in degrees East
@@ -25,7 +25,7 @@ mask = np.ones((len(lat),len(lon)))
 
 # create the NetCDF file
 
-root_grp = Dataset(fname, 'w', format='NETCDF4')
+root_grp = Dataset(filename, 'w', format='NETCDF4')
 
 # dimensions
 root_grp.createDimension('lon', len(lon))

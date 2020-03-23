@@ -55,7 +55,9 @@ variables:
 }
 ```
 
-An example for how to create this file in python is in [https://github.com/gher-ulg/DINCAE/blob/master/examples/create\_input\_file.py](https://github.com/gher-ulg/DINCAE/blob/master/examples/create\_input\_file.py)
+An example for how to create this file in the examples folder:
+* [python example](https://github.com/gher-ulg/DINCAE/blob/master/examples/create\_input\_file.py)
+* [julia example](https://github.com/gher-ulg/DINCAE/blob/master/examples/create\_input\_file.jl)
 
 
 ## Running DINCAE
