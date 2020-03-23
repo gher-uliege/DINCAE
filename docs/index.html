@@ -1135,6 +1135,9 @@ reconstruct missing data in satellite observations.</p>
 <span class="sd">is a boolean mask where true means the data is missing and `mask` is a boolean mask</span>
 <span class="sd">where true means the data location is valid, e.g. sea points for sea surface temperature.</span>
 
+<span class="sd">The mask variable can also be ommited. In this case a grid point is considered valid, if</span>
+<span class="sd">the grid point has at least 5% of non-clouded data (parameter `minfrac`).</span>
+
 <span class="sd">At the bare-minimum a NetCDF file should have the following variables and</span>
 <span class="sd">attributes:</span>
 
@@ -1938,6 +1941,8 @@ the longitude in degrees east, <code>lat</code> is the latitude in degrees North
 a numpy datetime vector, <code>data_full</code> is a 3-d array with the data, <code>missing</code>
 is a boolean mask where true means the data is missing and <code>mask</code> is a boolean mask
 where true means the data location is valid, e.g. sea points for sea surface temperature.</p>
+<p>The mask variable can also be ommited. In this case a grid point is considered valid, if
+the grid point has at least 5% of non-clouded data (parameter <code>minfrac</code>).</p>
 <p>At the bare-minimum a NetCDF file should have the following variables and
 attributes:</p>
 <div class="codehilite"><pre><span></span>netcdf file.nc {
@@ -1965,6 +1970,9 @@ variables:
 <span class="sd">a numpy datetime vector, `data_full` is a 3-d array with the data, `missing`</span>
 <span class="sd">is a boolean mask where true means the data is missing and `mask` is a boolean mask</span>
 <span class="sd">where true means the data location is valid, e.g. sea points for sea surface temperature.</span>
+
+<span class="sd">The mask variable can also be ommited. In this case a grid point is considered valid, if</span>
+<span class="sd">the grid point has at least 5% of non-clouded data (parameter `minfrac`).</span>
 
 <span class="sd">At the bare-minimum a NetCDF file should have the following variables and</span>
 <span class="sd">attributes:</span>
@@ -2030,7 +2038,7 @@ variables:
       
   <div class="item">
     <div class="name def" id="DINCAE.reconstruct">
-    <p>def <span class="ident">reconstruct</span>(</p><p>lon, lat, mask, meandata, train_datagen, train_len, test_datagen, test_len, outdir, resize_method=1, epochs=1000, batch_size=30, save_each=10, save_model_each=500, skipconnections=[1, 2, 3, 4], dropout_rate_train=0.3, tensorboard=False, truth_uncertain=False, shuffle_buffer_size=45, nvar=10, enc_nfilter_internal=[16, 24, 36, 54], frac_dense_layer=[0.2], clip_grad=5.0, regularization_L2_beta=0, transfun=(&lt;function identity at 0x7f711650fd08&gt;, &lt;function identity at 0x7f711650fd08&gt;), savesample=&lt;function savesample at 0x7f70d0da50d0&gt;, learning_rate=0.001, learning_rate_decay_epoch=inf, iseed=None, nprefetch=0, loss=[], nepoch_keep_missing=0)</p>
+    <p>def <span class="ident">reconstruct</span>(</p><p>lon, lat, mask, meandata, train_datagen, train_len, test_datagen, test_len, outdir, resize_method=1, epochs=1000, batch_size=30, save_each=10, save_model_each=500, skipconnections=[1, 2, 3, 4], dropout_rate_train=0.3, tensorboard=False, truth_uncertain=False, shuffle_buffer_size=45, nvar=10, enc_nfilter_internal=[16, 24, 36, 54], frac_dense_layer=[0.2], clip_grad=5.0, regularization_L2_beta=0, transfun=(&lt;function identity at 0x7fdc2d3edd08&gt;, &lt;function identity at 0x7fdc2d3edd08&gt;), savesample=&lt;function savesample at 0x7fdbe7c830d0&gt;, learning_rate=0.001, learning_rate_decay_epoch=inf, iseed=None, nprefetch=0, loss=[], nepoch_keep_missing=0)</p>
     </div>
     
 
@@ -2486,7 +2494,7 @@ e.g. sea points for sea surface temperature.</li>
       
   <div class="item">
     <div class="name def" id="DINCAE.reconstruct_gridded_nc">
-    <p>def <span class="ident">reconstruct_gridded_nc</span>(</p><p>filename, varname, outdir, jitter_std=0.05, ntime_win=3, transfun=(&lt;function identity at 0x7f711650fd08&gt;, &lt;function identity at 0x7f711650fd08&gt;), **kwargs)</p>
+    <p>def <span class="ident">reconstruct_gridded_nc</span>(</p><p>filename, varname, outdir, jitter_std=0.05, ntime_win=3, transfun=(&lt;function identity at 0x7fdc2d3edd08&gt;, &lt;function identity at 0x7fdc2d3edd08&gt;), **kwargs)</p>
     </div>
     
 
