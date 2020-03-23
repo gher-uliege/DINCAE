@@ -108,7 +108,9 @@ attributes:
     else:
         missing = data.mask
 
-    print("data shape, range",data.shape,data.min(),data.max())
+    print("data shape: ",data.shape)
+    print("data range: ",data.min(),data.max())
+
     return lon,lat,time,data,missing,mask
 
 
@@ -316,7 +318,7 @@ def reconstruct(lon,lat,mask,meandata,
                 transfun = (identity,identity),
                 savesample = savesample,
                 learning_rate = 1e-3,
-                learning_rate_decay_epoch = 100,
+                learning_rate_decay_epoch = np.inf,
                 iseed = None,
                 nprefetch = 0,
                 loss = [],
@@ -360,7 +362,7 @@ e.g. sea points for sea surface temperature.
  * `clip_grad`: clip gradient to a maximum L2-norm.
  * `regularization_L2_beta`: scalar to enforce L2 regularization on the weight
  * `learning_rate`:  The initial learning rate
- * `learning_rate_decay_epoch`: The exponential recay rate of the leaning rate. After `learning_rate_decay_epoch` the learning rate is halved. The learning rate is compute as  `learning_rate * 0.5^(epoch / learning_rate_decay_epoch)`. `learning_rate_decay_epoch` can be `numpy.inf` for a constant learning rate
+ * `learning_rate_decay_epoch`: The exponential recay rate of the leaning rate. After `learning_rate_decay_epoch` the learning rate is halved. The learning rate is compute as  `learning_rate * 0.5^(epoch / learning_rate_decay_epoch)`. `learning_rate_decay_epoch` can be `numpy.inf` for a constant learning rate (default)
 """
 
 
