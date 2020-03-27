@@ -77,7 +77,6 @@ def reference_reconstruct_gridded_nc():
         print("warning: no reference value for version tensorflow " + tf.__version__)
         assert loss[-1] < 2
 
-
 def test_reconstruct_gridded_nc(small_example):
     filename,varname = small_example
     outdir = "temp-result"
@@ -92,6 +91,7 @@ def test_reconstruct_gridded_nc(small_example):
                                   tensorboard = True,
                                   nprefetch = 1,
                                   nepoch_keep_missing = 10,
+                                  learning_rate_decay_epoch = 100,
                                   truth_uncertain = True,
                                   regularization_L2_beta = 0.001,
                                   loss = loss,
