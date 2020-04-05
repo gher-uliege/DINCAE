@@ -32,7 +32,8 @@ def test_load(small_example):
 
 
 
-def reference_reconstruct_gridded_nc():
+@pytest.mark.skip(reason="slow and only for reference")
+def test_reconstruct_gridded_large_nc():
     filename = "avhrr_sub_add_clouds.nc"
     varname = "SST"
     outdir = "temp-result"
@@ -46,12 +47,6 @@ def reference_reconstruct_gridded_nc():
     DINCAE.reconstruct_gridded_nc(filename,varname,outdir,
                                   iseed = iseed,
                                   epochs = epochs,
-                                  save_each = 1,
-                                  tensorboard = True,
-                                  nprefetch = 1,
-                                  nepoch_keep_missing = 10,
-                                  truth_uncertain = True,
-                                  regularization_L2_beta = 0.001,
                                   loss = loss,
     )
 
