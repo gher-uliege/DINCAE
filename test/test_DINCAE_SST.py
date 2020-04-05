@@ -32,7 +32,7 @@ def test_load(small_example):
 
 
 
-@pytest.mark.skip(reason="slow and only for reference")
+#@pytest.mark.skip(reason="slow and only for reference")
 def test_reconstruct_gridded_large_nc():
     filename = "avhrr_sub_add_clouds.nc"
     varname = "SST"
@@ -44,6 +44,9 @@ def test_reconstruct_gridded_large_nc():
     if not os.path.isfile(filename):
        urllib.request.urlretrieve("https://dox.ulg.ac.be/index.php/s/C7rwJ9goIRpvEcC/download", filename)
 
+
+    print("tf version",tf.__version__)
+
     DINCAE.reconstruct_gridded_nc(filename,varname,outdir,
                                   iseed = iseed,
                                   epochs = epochs,
@@ -54,10 +57,10 @@ def test_reconstruct_gridded_large_nc():
     print("Last training loss: {:.30f}".format(loss[-1]))
 
     refloss = {
-        "1.12.0": 1.610045909881591796875000000000,
-        "1.15.0": 1.074228763580322265625000000000
+        "1.15.0": 1.139755129814147949218750000000,
         }
 
+    print("tf version",tf.__version__)
 
     if tf.__version__ in refloss:
         # 1.12 on travis
@@ -67,6 +70,8 @@ def test_reconstruct_gridded_large_nc():
         # 0.949220180511474609375000000000
 
         print("loss equal ",loss[-1] == refloss[tf.__version__])
+        print("loss difference ",loss[-1] - refloss[tf.__version__])
+
         assert abs(loss[-1] - refloss[tf.__version__]) < 0.2
     else:
         print("warning: no reference value for version tensorflow " + tf.__version__)
