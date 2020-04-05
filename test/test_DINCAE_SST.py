@@ -32,7 +32,7 @@ def test_load(small_example):
 
 
 
-#@pytest.mark.skip(reason="slow and only for reference")
+@pytest.mark.skip(reason="slow and only for reference")
 def test_reconstruct_gridded_large_nc():
     filename = "avhrr_sub_add_clouds.nc"
     varname = "SST"
