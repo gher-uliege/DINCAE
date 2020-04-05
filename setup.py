@@ -15,7 +15,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=[
         "netCDF4>=1.4.2",
-        "numpy>=1.15.4",
+        "numpy>=1.16.0",
         "tensorflow==1.15.2",
     ],
     extras_require= {
