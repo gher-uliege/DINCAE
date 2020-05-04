@@ -7,7 +7,8 @@
 
 
 DINCAE (Data-Interpolating Convolutional Auto-Encoder) is a neural network to
-reconstruct missing data in satellite observations. https://www.geosci-model-dev-discuss.net/gmd-2019-128/
+reconstruct missing data in satellite observations which is described in the following open access paper:
+https://doi.org/10.5194/gmd-13-1609-2020
 
 
 ## Installation
