@@ -50,8 +50,8 @@ kwargs = {
 }
 
 
-for data_case in [data[0:1],data[0:2],data[0:3],data]:
-#for data_case in [data]:
+#for data_case in [data[0:1],data[0:2],data[0:3],data]:
+for data_case in [data]:
 #for data_case in [data[0:2]]:
     with Pool(1) as p:
         import DINCAE
