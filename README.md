@@ -23,7 +23,7 @@ Tested versions:
 * Python 3.6.8
 * netcdf4 1.4.2
 * numpy 1.15.4
-* Tensorflow version 1.15
+* Tensorflow version 1.15 (DINCAE does not work with TensforFlow 2.0)
 
 You can install those packages either with `pip3` or with `conda`.
 
