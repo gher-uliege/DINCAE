@@ -7,7 +7,8 @@
 
 
 DINCAE (Data-Interpolating Convolutional Auto-Encoder) is a neural network to
-reconstruct missing data in satellite observations. https://www.geosci-model-dev-discuss.net/gmd-2019-128/
+reconstruct missing data in satellite observations which is described in the following open access paper:
+https://doi.org/10.5194/gmd-13-1609-2020
 
 
 ## Installation
@@ -22,7 +23,7 @@ Tested versions:
 * Python 3.6.8
 * netcdf4 1.4.2
 * numpy 1.15.4
-* Tensorflow version 1.15
+* Tensorflow version 1.15 (DINCAE does not work with TensforFlow 2.0)
 
 You can install those packages either with `pip3` or with `conda`.
 
