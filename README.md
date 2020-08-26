@@ -13,7 +13,7 @@ https://doi.org/10.5194/gmd-13-1609-2020
 
 ## Installation
 
-Python 3.6 with the modules:
+Python 3.6 or 3.7 with the modules:
 * numpy (https://docs.scipy.org/doc/numpy/user/install.html)
 * netCDF4 (https://unidata.github.io/netcdf4-python/netCDF4/index.html)
 * TensorFlow 1.15 with GPU support (https://www.tensorflow.org/install)
@@ -23,7 +23,7 @@ Tested versions:
 * Python 3.6.8
 * netcdf4 1.4.2
 * numpy 1.15.4
-* Tensorflow version 1.15 (DINCAE does not work with TensforFlow 2.0)
+* Tensorflow version 1.15 (DINCAE does not work with TensforFlow 2.0; TensorFlow 1.5 does not work on python 3.8)
 
 You can install those packages either with `pip3` or with `conda`.
 
