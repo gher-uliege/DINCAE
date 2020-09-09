@@ -81,7 +81,7 @@ Convolutional layers can require "a lot" of GPU memory. These parameters can aff
 * reduce the mini-batch size
 * use fewer layers (e.g. `enc_nfilter_internal` = [16,24,36] or [16,24])
 * use less filters (reduce the values of the optional parameter enc_nfilter_internal)
-* reduce `frac_dense_layer`, a parameter controling the width of the dense layer in the bottleneck
+* reduce `frac_dense_layer`, a parameter controlling the width of the dense layer in the bottleneck
 * use a smaller domain or lower resolution
 
 
