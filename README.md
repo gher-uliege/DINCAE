@@ -13,7 +13,7 @@ https://doi.org/10.5194/gmd-13-1609-2020
 
 ## Installation
 
-Python 3.6 with the modules:
+Python 3.6 or 3.7 with the modules:
 * numpy (https://docs.scipy.org/doc/numpy/user/install.html)
 * netCDF4 (https://unidata.github.io/netcdf4-python/netCDF4/index.html)
 * TensorFlow 1.15 with GPU support (https://www.tensorflow.org/install)
@@ -23,7 +23,7 @@ Tested versions:
 * Python 3.6.8
 * netcdf4 1.4.2
 * numpy 1.15.4
-* Tensorflow version 1.15 (DINCAE does not work with TensforFlow 2.0)
+* Tensorflow version 1.15 (DINCAE does not work with TensforFlow 2.0; TensorFlow 1.5 does not work on python 3.8)
 
 You can install those packages either with `pip3` or with `conda`.
 
@@ -74,6 +74,16 @@ The code can be run as follows:
 ```bash
 python3 run_DINCAE.py
 ```
+## Reducing GPU memory
+
+Convolutional layers can require "a lot" of GPU memory. These parameters can affect GPU memory utilisation:
+
+* reduce the mini-batch size
+* use fewer layers (e.g. `enc_nfilter_internal` = [16,24,36] or [16,24])
+* use less filters (reduce the values of the optional parameter enc_nfilter_internal)
+* reduce `frac_dense_layer`, a parameter controlling the width of the dense layer in the bottleneck
+* use a smaller domain or lower resolution
+
 
 ## Example results
 
