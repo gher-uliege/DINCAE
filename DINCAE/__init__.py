@@ -382,9 +382,9 @@ e.g. sea points for sea surface temperature.
     # number of output variables
     nvarout = 2
     enc_nfilter = [nvar] + enc_nfilter_internal
-    #dec_nfilter = enc_nfilter_internal[::-1] + [nvarout]
+    dec_nfilter = enc_nfilter_internal[::-1] + [nvarout]
     # old behaviour
-    dec_nfilter = enc_nfilter_internal[::-1] + [nvar]
+    #dec_nfilter = enc_nfilter_internal[::-1] + [nvar]
 
     if outdir != None:
         if not os.path.isdir(outdir):

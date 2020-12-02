@@ -58,7 +58,9 @@ def test_reconstruct_gridded_large_nc():
     print("Last training loss: {:.30f}".format(loss[-1]))
 
     refloss = {
-        "1.15.0": 1.139755129814147949218750000000,
+        #old behaviour
+        #"1.15.0": 1.139755129814147949218750000000,
+        "1.15.0": 3.667840242385864257812500000000
         }
 
     print("tf version",tf.__version__)
