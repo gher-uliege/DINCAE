@@ -76,7 +76,7 @@ python3 run_DINCAE.py
 ```
 ## Reducing GPU memory
 
-Convolutional layers can require "a lot" of GPU memory. These parameters can affect GPU memory utilisation:
+Convolutional neural networks can require "a lot" of GPU memory. These parameters can affect GPU memory utilisation:
 
 * reduce the mini-batch size
 * use fewer layers (e.g. `enc_nfilter_internal` = [16,24,36] or [16,24])
