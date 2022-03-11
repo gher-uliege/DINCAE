@@ -11,6 +11,10 @@ reconstruct missing data in satellite observations which is described in the fol
 https://doi.org/10.5194/gmd-13-1609-2020
 
 
+*Note that this code is no longer maintained and has been superseeded by https://github.com/gher-ulg/DINCAE.jl*
+
+
+
 ## Installation
 
 Python 3.6 or 3.7 with the modules:
