@@ -77,6 +77,13 @@ The code can be run as follows:
 ```bash
 python3 run_DINCAE.py
 ```
+
+The output NetCDF files are contain the variables:
+* `meandata` the time average of the input data used to compute the anomalies
+* `mean_rec` and `sigma_rec`: the mean and standard deviation of the Gaussian probability distribution function of the reconstruction.  
+
+In [Barth et al., 2020](https://doi.org/10.5194/gmd-13-1609-2020) the best results were obtained by averaging all the NetCDF files.
+
 ## Reducing GPU memory
 
 Convolutional neural networks can require "a lot" of GPU memory. These parameters can affect GPU memory utilisation:
