@@ -1,4 +1,4 @@
-[![documentation latest](https://img.shields.io/badge/docs-latest-blue.svg)](https://gher-ulg.github.io/DINCAE/)
+[![documentation latest](https://img.shields.io/badge/docs-latest-blue.svg)](https://gher-uliege.github.io/DINCAE/)
 [![DOI](https://zenodo.org/badge/193079989.svg)](https://zenodo.org/badge/latestdoi/193079989)
 [![codecov.io](http://codecov.io/github/gher-ulg/DINCAE/coverage.svg?branch=master)](http://codecov.io/github/gher-ulg/DINCAE?branch=master)
 
