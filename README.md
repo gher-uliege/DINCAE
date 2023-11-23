@@ -33,7 +33,7 @@ You can install those packages either with `pip3` or with `conda`.
 
 ## Documentation
 
-The document is available at https://gher-ulg.github.io/DINCAE/.
+The document is available at https://gher-uliege.github.io/DINCAE/.
 
 ## Input format
 
