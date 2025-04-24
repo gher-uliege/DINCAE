@@ -1,3 +1,8 @@
+[![Project Status: Unsupported – The project has reached a stable, usable state but the author(s) have ceased all work on it. A new maintainer may be desired.](https://www.repostatus.org/badges/latest/unsupported.svg)](https://www.repostatus.org/#unsupported)
+![GitHub last commit](https://img.shields.io/github/last-commit/gher-uliege/DINCAE)
+![GitHub top language](https://img.shields.io/github/languages/top/gher-uliege/DINCAE)
+![GitHub language count](https://img.shields.io/github/languages/count/gher-uliege/DINCAE)
+
 [![documentation latest](https://img.shields.io/badge/docs-latest-blue.svg)](https://gher-uliege.github.io/DINCAE/)
 [![DOI](https://zenodo.org/badge/193079989.svg)](https://zenodo.org/badge/latestdoi/193079989)
 [![codecov.io](http://codecov.io/github/gher-ulg/DINCAE/coverage.svg?branch=master)](http://codecov.io/github/gher-ulg/DINCAE?branch=master)
