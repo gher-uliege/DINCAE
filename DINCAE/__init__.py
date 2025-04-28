@@ -124,7 +124,7 @@ def data_generator(lon,lat,time,data_full,missing,
                    jitter_std = 0.05):
 
     return data_generator_list(lon,lat,time,[data_full],[missing],
-                   train = True,
+                   train = train,
                    ntime_win = ntime_win,
                    obs_err_std = [obs_err_std],
                    jitter_std = [jitter_std])
